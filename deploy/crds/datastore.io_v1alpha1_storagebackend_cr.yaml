@@ -1,0 +1,7 @@
+apiVersion: datastore.io/v1alpha1
+kind: StorageBackend
+metadata:
+  name: example-storagebackend
+spec:
+  # Add fields here
+  size: 3
