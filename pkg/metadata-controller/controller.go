@@ -1,29 +1,39 @@
 package metadatacontroller
 
 import (
+	"github.com/hwameistor/datastore/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
+
+	datastorev1alpha1 "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
 )
 
-// Evictor interface
+// It has some data to be shared among all the controllers.
+// So, it's a global variable
+var instance MetadataController
+
+func Instance() MetadataController {
+	if instance == nil {
+		instance = newMetadataController()
+	}
+	return instance
+}
+
+// MetadataController interface
 type MetadataController interface {
 	Run(stopCh <-chan struct{}) error
+
+	ReconcileStorageBackend(backend *datastorev1alpha1.StorageBackend)
 }
 
 type controller struct {
 	clientset *kubernetes.Clientset
 }
 
-/* steps:
-1. watch for Pod update event, insert the Pod with Evicted status into evictedPodQueue;
-2. pick up a Pod from evictedPodQueue, check if it is using HwameiStor volume. If yes, insert it into the migrateVolumeQueue; if not, ignore
-3. pick up a volume form migrateVolumeQueue, and migrate it. Make sure there is no replica located at the node where the pod is evicted;
-*/
-
 // New an assistant instance
-func New(clientset *kubernetes.Clientset) MetadataController {
+func newMetadataController() MetadataController {
 	return &controller{
-		clientset: clientset,
+		clientset: utils.BuildInClusterClientset(),
 	}
 }
 
@@ -31,4 +41,9 @@ func (ctrl *controller) Run(stopCh <-chan struct{}) error {
 	log.Debug("start informer factory")
 
 	return nil
+}
+
+func (ctrl *controller) ReconcileStorageBackend(backend *datastorev1alpha1.StorageBackend) {
+	log.Debug("Reconciling a StorageBackend")
+
 }
