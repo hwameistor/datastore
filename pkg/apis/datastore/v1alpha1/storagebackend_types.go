@@ -25,7 +25,7 @@ type StorageBackendSpec struct {
 	FTP *FTPSpec `json:"ftp,omitempty"`
 
 	// indicate if refresh data or not
-	// +kubebuilder:default:=false
+	// +kubebuilder:default:=true
 	Refresh bool `json:"refresh"`
 }
 

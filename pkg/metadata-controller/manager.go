@@ -132,6 +132,7 @@ func (mgr *storageBackendManager) handleStorageBackend(backend *datastorev1alpha
 	}
 	newBackend.Status.LastRefreshTimestamp = &metav1.Time{Time: time.Now()}
 	newBackend.Status.RefreshCount++
+	newBackend.Status.Connected = true
 	if _, err := mgr.dsClientSet.DatastoreV1alpha1().StorageBackends().UpdateStatus(ctx, newBackend, metav1.UpdateOptions{}); err != nil {
 		log.WithField("Message", newBackend.Status.Error).WithError(err).Error("Failed to update storage backend")
 	}
