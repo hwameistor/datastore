@@ -1,0 +1,12 @@
+apiVersion: datastore.io/v1alpha1
+kind: StorageBackend
+metadata:
+  name: minio-test
+spec:
+  refresh: true
+  type: minio
+  minio:
+    endpoint: 127.0.0.1:9000
+    bucket: llm
+    secretAccessKey: oOf3MZUiGSZdF9fyvbHAj3WjCCc50J8dEZTVWFqT
+    accessKeyId: QSkh1nNQGkIBWmnLqCIu

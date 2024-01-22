@@ -11,7 +11,31 @@ spec:
     singular: storagebackend
   scope: Cluster
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.type
+      name: Type
+      type: string
+    - jsonPath: .status.lastRefreshTime
+      name: LastRefreshTime
+      type: date
+    - jsonPath: .spec.refresh
+      name: Refresh
+      priority: 1
+      type: boolean
+    - jsonPath: .status.refreshCount
+      name: RefreshCount
+      priority: 1
+      type: integer
+    - jsonPath: .status.connected
+      name: Connected
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.error
+      name: Error
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: StorageBackend is the Schema for the storagebackends API
@@ -30,9 +54,83 @@ spec:
             type: object
           spec:
             description: StorageBackendSpec defines the desired state of StorageBackend
+            properties:
+              ftp:
+                properties:
+                  endpoint:
+                    type: string
+                  rootdir:
+                    type: string
+                required:
+                - rootdir
+                type: object
+              minio:
+                properties:
+                  accessKeyId:
+                    type: string
+                  bucket:
+                    type: string
+                  endpoint:
+                    type: string
+                  prefix:
+                    type: string
+                  region:
+                    type: string
+                  secretAccessKey:
+                    type: string
+                required:
+                - accessKeyId
+                - bucket
+                - secretAccessKey
+                type: object
+              nfs:
+                properties:
+                  endpoint:
+                    type: string
+                  rootdir:
+                    type: string
+                required:
+                - rootdir
+                type: object
+              refresh:
+                default: false
+                description: indicate if refresh data or not
+                type: boolean
+              type:
+                default: unknown
+                description: type of storage backend
+                enum:
+                - minio
+                - aws-s3
+                - nfs
+                - ftp
+                - unknown
+                type: string
+            required:
+            - refresh
+            - type
             type: object
           status:
             description: StorageBackendStatus defines the observed state of StorageBackend
+            properties:
+              connected:
+                default: false
+                description: is the storage backend connected or accessible?
+                type: boolean
+              error:
+                description: any error message
+                type: string
+              lastRefreshTime:
+                description: last time to refresh the data from the backend
+                format: date-time
+                type: string
+              refreshCount:
+                default: 0
+                description: how many time the data of backend have been refreshed
+                type: integer
+            required:
+            - connected
+            - refreshCount
             type: object
         type: object
     served: true

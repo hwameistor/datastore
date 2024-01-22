@@ -2,14 +2,14 @@ package utils
 
 import (
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // BuildInClusterClientset builds a kubernetes in-cluster clientset
 func BuildInClusterClientset() *kubernetes.Clientset {
-	config, err := rest.InClusterConfig()
+	config, err := config.GetConfig()
 	if err != nil {
 		log.WithError(err).Fatal("Failed to build kubernetes config")
 	}

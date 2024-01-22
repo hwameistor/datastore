@@ -14,9 +14,21 @@ vendor:
 	go mod tidy -compat=1.18
 	go mod vendor
 
+.PHONY: compile
+compile: compile_metadata_controller
+
+.PHONY: build
+build: build_metadata_controller_image
+
+.PHONY: run
+run: run_metadata_controller
+
 #### for METADATA_CONTROLLER #########
 METADATA_CONTROLLER_MODULE_NAME = metadata-controller
 METADATA_CONTROLLER_BUILD_INPUT = ${CMDS_DIR}/${METADATA_CONTROLLER_MODULE_NAME}/main.go
+.PHONY: run_metadata_controller
+run_metadata_controller:
+	go run ${BUILD_OPTIONS} ${METADATA_CONTROLLER_BUILD_INPUT}
 
 .PHONY: compile_metadata_controller
 compile_metadata_controller:
