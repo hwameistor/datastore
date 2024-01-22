@@ -5,12 +5,12 @@ import (
 	"flag"
 	"os"
 
+	"github.com/hwameistor/datastore/pkg/utils"
 	"github.com/kubernetes-csi/csi-lib-utils/leaderelection"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	log "github.com/sirupsen/logrus"
 
 	metadatacontroller "github.com/hwameistor/datastore/pkg/metadata-controller"
-	"github.com/hwameistor/datastore/pkg/utils"
 )
 
 const (
@@ -26,9 +26,8 @@ func main() {
 	setupLogging()
 
 	stopCh := make(chan struct{})
-
 	run := func(ctx context.Context) {
-		if err := metadatacontroller.Instance().Run(stopCh); err != nil {
+		if err := metadatacontroller.NewMetadataController().Run(stopCh); err != nil {
 			log.WithFields(log.Fields{"error": err.Error()}).Error("failed to run metadata controller")
 			os.Exit(1)
 		}
