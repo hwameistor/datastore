@@ -93,7 +93,7 @@ spec:
                 - rootdir
                 type: object
               refresh:
-                default: false
+                default: true
                 description: indicate if refresh data or not
                 type: boolean
               type:
