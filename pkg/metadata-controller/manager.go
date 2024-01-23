@@ -17,10 +17,14 @@ import (
 
 type storageBackendManager struct {
 	dsClientSet *datastoreclientset.Clientset
+
+	globalView *GlobalViewFileSystem
 }
 
 func newstorageBackendManager() *storageBackendManager {
-	return &storageBackendManager{}
+	return &storageBackendManager{
+		globalView: &GlobalViewFileSystem{},
+	}
 }
 
 func (mgr *storageBackendManager) Run(stopCh <-chan struct{}) {
@@ -102,19 +106,22 @@ func (mgr *storageBackendManager) _checkConnection(backend *datastorev1alpha1.St
 
 func (mgr *storageBackendManager) onStorageBackendAdd(obj interface{}) {
 	backend, _ := obj.(*datastorev1alpha1.StorageBackend)
-	mgr.handleStorageBackend(backend)
+	mgr.handleStorageBackend(backend, true)
 }
 
 func (mgr *storageBackendManager) onStorageBackendUpdate(oldObj, newObj interface{}) {
-	mgr.onStorageBackendAdd(newObj)
+	backend, _ := newObj.(*datastorev1alpha1.StorageBackend)
+	mgr.handleStorageBackend(backend, false)
 }
 
 func (mgr *storageBackendManager) onStorageBackendDelete(obj interface{}) {
 
 }
 
-func (mgr *storageBackendManager) handleStorageBackend(backend *datastorev1alpha1.StorageBackend) {
-	if !backend.Spec.Refresh {
+func (mgr *storageBackendManager) handleStorageBackend(backend *datastorev1alpha1.StorageBackend, forceRefresh bool) {
+	mgr.globalView.UpdateDataServer(backend)
+
+	if !forceRefresh && !backend.Spec.Refresh {
 		return
 	}
 

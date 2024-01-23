@@ -3,6 +3,7 @@ package metadatacontroller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -92,12 +93,16 @@ func (mgr *storageBackendManager) handleStorageBackendForMinIO(backend *datastor
 func (mgr *storageBackendManager) refreshDataFromStorageBackendForMinIO(minioClient *minio.Client, backend *datastorev1alpha1.StorageBackend) error {
 	ctx := context.Background()
 
-	for obj := range minioClient.ListObjects(ctx, backend.Spec.MinIO.Bucket, minio.ListObjectsOptions{Prefix: backend.Spec.MinIO.Prefix, Recursive: false}) {
-		log.WithFields(log.Fields{
-			"key":  obj.Key,
-			"size": obj.Size,
-		}).Debug("Got an object")
+	objs := []*DataObject{}
+	cnt := 0
+	for obj := range minioClient.ListObjects(ctx, backend.Spec.MinIO.Bucket, minio.ListObjectsOptions{Prefix: backend.Spec.MinIO.Prefix, Recursive: true}) {
+		cnt++
+		items := strings.Split(obj.Key, "/")
+		objs = append(objs, &DataObject{Path: obj.Key, Name: items[len(items)-1], Size: obj.Size, MTime: obj.LastModified})
 	}
 
+	log.WithField("total", cnt).Debug("Listed the objects")
+
+	mgr.globalView.UpdateDataObjects(backend, objs)
 	return nil
 }
