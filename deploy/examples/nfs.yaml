@@ -1,0 +1,10 @@
+apiVersion: datastore.io/v1alpha1
+kind: StorageBackend
+metadata:
+  name: nfs-test
+spec:
+  refresh: true
+  type: nfs
+  nfs:
+    endpoint: 127.0.0.1
+    export: "/Users/liangsun/test/share"
