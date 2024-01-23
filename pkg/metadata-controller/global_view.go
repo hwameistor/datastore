@@ -6,6 +6,7 @@ import (
 	"time"
 
 	datastorev1alpha1 "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
+	log "github.com/sirupsen/logrus"
 )
 
 type GlobalViewFileSystem struct {
@@ -55,6 +56,19 @@ func (gs *GlobalViewFileSystem) _updateDataServerForMinIO(backend *datastorev1al
 	}
 	gs.Servers[backend.Name].Endpoint = backend.Spec.MinIO.Endpoint
 	gs.Servers[backend.Name].Connected = backend.Status.Connected
+}
+
+func (gs *GlobalViewFileSystem) RemoveDataServer(backend *datastorev1alpha1.StorageBackend) {
+	log.WithFields(log.Fields{"backend": backend.Name}).Debug("Removing a storage backend ...")
+
+	if len(gs.Servers) == 0 {
+		return
+	}
+	if gs.Servers[backend.Name] == nil {
+		return
+	}
+
+	delete(gs.Servers, backend.Name)
 }
 
 func (gs *GlobalViewFileSystem) resetDataServer(backend *datastorev1alpha1.StorageBackend) *DataServer {
