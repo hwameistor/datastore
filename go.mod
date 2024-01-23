@@ -25,7 +25,10 @@ require (
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 )
 
-require github.com/minio/minio-go/v7 v7.0.66
+require (
+	github.com/minio/minio-go/v7 v7.0.66
+	github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b
+)
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -38,6 +41,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/onsi/gomega v1.19.0 // indirect
 	github.com/prometheus/client_golang v1.13.1 // indirect
+	github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

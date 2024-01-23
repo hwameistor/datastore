@@ -100,6 +100,9 @@ func (mgr *storageBackendManager) _checkConnection(backend *datastorev1alpha1.St
 	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeMinIO {
 		return mgr._checkConnectionForMinIO(backend)
 	}
+	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeNFS {
+		return mgr._checkConnectionForNFS(backend)
+	}
 
 	return false, fmt.Errorf("unknown storage backend")
 }
@@ -128,6 +131,8 @@ func (mgr *storageBackendManager) handleStorageBackend(backend *datastorev1alpha
 
 	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeMinIO {
 		mgr.handleStorageBackendForMinIO(backend)
+	} else if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeNFS {
+		mgr.handleStorageBackendForNFS(backend)
 	} else {
 		mgr.handleStorageBackendForUnknown(backend)
 	}

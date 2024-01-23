@@ -40,12 +40,15 @@ type MinIOSpec struct {
 
 type NFSSpec struct {
 	Endpoint string `json:"endpoint,omitempty"`
-	RootDir  string `json:"rootdir"`
+	Export   string `json:"export"`
+	// +kubebuilder:default:=/
+	RootDir string `json:"rootdir"`
 }
 
 type FTPSpec struct {
 	Endpoint string `json:"endpoint,omitempty"`
-	RootDir  string `json:"rootdir"`
+	// +kubebuilder:default:=/
+	RootDir string `json:"rootdir"`
 }
 
 // StorageBackendStatus defines the observed state of StorageBackend
