@@ -115,7 +115,8 @@ func (mgr *storageBackendManager) onStorageBackendUpdate(oldObj, newObj interfac
 }
 
 func (mgr *storageBackendManager) onStorageBackendDelete(obj interface{}) {
-
+	backend, _ := obj.(*datastorev1alpha1.StorageBackend)
+	mgr.removeStorageBackend(backend)
 }
 
 func (mgr *storageBackendManager) handleStorageBackend(backend *datastorev1alpha1.StorageBackend, forceRefresh bool) {
@@ -144,9 +145,16 @@ func (mgr *storageBackendManager) handleStorageBackend(backend *datastorev1alpha
 		log.WithField("Message", newBackend.Status.Error).WithError(err).Error("Failed to update storage backend")
 	}
 
+	dumpGlobalView(mgr.globalView)
 }
 
 func (mgr *storageBackendManager) handleStorageBackendForUnknown(backend *datastorev1alpha1.StorageBackend) {
 	log.WithFields(log.Fields{"backend": backend.Name}).Debug("Handling a unknown storage backend")
 
+}
+
+func (mgr *storageBackendManager) removeStorageBackend(backend *datastorev1alpha1.StorageBackend) {
+	mgr.globalView.RemoveDataServer(backend)
+
+	dumpGlobalView(mgr.globalView)
 }
