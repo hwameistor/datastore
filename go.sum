@@ -1039,9 +1039,9 @@ github.com/urfave/negroni v1.0.0/go.mod h1:Meg73S6kFm/4PpbYdq35yYWoCZ9mS/YSx+lKn
 github.com/vishvananda/netlink v1.1.0/go.mod h1:cTgwzPIzzgDAYoQrMm0EdrjRUBkTqKYppBueQtXaqoE=
 github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17pCcGlemwknint6hfoeCVQrEMVwxRLRjXpq+BU=
 github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
-github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b h1:RUrsc0B9xF8iC8WXrva+ULeOwN/X+zqe0FdWcDxPt/M=
-github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b/go.mod h1:psQdhrCc+fimC/8/U+PboPiIMcdmKgRdAtcMnhXhjzI=
 github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
+github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00 h1:U0DnHRZFzoIV1oFEZczg5XyPut9yxk9jjtax/9Bxr/o=
+github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00/go.mod h1:Tq++Lr/FgiS3X48q5FETemXiSLGuYMQT2sPjYNPJSwA=
 github.com/xanzy/go-gitlab v0.15.0/go.mod h1:8zdQa/ri1dfn8eS3Ir1SyfvOKlw7WBJ8DVThkpGiXrs=
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c/go.mod h1:lB8K/P019DLNhemzwFU4jHLhdvlE6uDZjXFejJXr49I=
 github.com/xdg/stringprep v1.0.0/go.mod h1:Jhud4/sHMO4oL310DaZAKk9ZaJ08SJfe+sJh0HrGL1Y=

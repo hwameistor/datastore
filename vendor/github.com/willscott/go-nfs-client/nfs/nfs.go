@@ -1,19 +1,25 @@
 // Copyright © 2017 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: BSD-2-Clause
-//
 package nfs
 
 import (
 	"fmt"
-	"math/rand"
-	"net"
 	"os"
 	"os/user"
-	"syscall"
 	"time"
 
-	"github.com/vmware/go-nfs-client/nfs/rpc"
-	"github.com/vmware/go-nfs-client/nfs/util"
+	"github.com/willscott/go-nfs-client/nfs/rpc"
+	"github.com/willscott/go-nfs-client/nfs/util"
+)
+
+// Access function
+const (
+	ACCESS3_READ    = 0x0001
+	ACCESS3_LOOKUP  = 0x0002
+	ACCESS3_MODIFY  = 0x0004
+	ACCESS3_EXTEND  = 0x0008
+	ACCESS3_DELETE  = 0x0010
+	ACCESS3_EXECUTE = 0x0020
 )
 
 const (
@@ -21,14 +27,19 @@ const (
 	Nfs3Vers = 3
 
 	// program methods
+	NFSProc3GetAttr     = 1
+	NFSProc3SetAttr     = 2
 	NFSProc3Lookup      = 3
+	NFSProc3Access      = 4
 	NFSProc3Readlink    = 5
 	NFSProc3Read        = 6
 	NFSProc3Write       = 7
 	NFSProc3Create      = 8
 	NFSProc3Mkdir       = 9
+	NFSProc3Symlink     = 10
 	NFSProc3Remove      = 12
 	NFSProc3RmDir       = 13
+	NFSProc3Rename      = 14
 	NFSProc3ReadDirPlus = 17
 	NFSProc3FSInfo      = 19
 	NFSProc3Commit      = 21
@@ -50,6 +61,16 @@ const (
 type Diropargs3 struct {
 	FH       []byte
 	Filename string
+}
+
+// SetAttr for setattr use
+type SetAttr struct {
+	Mode  uint32
+	UID   uint32
+	GID   uint32
+	Size  uint64
+	Atime NFS3Time
+	Mtime NFS3Time
 }
 
 type Sattr3 struct {
@@ -76,6 +97,10 @@ type SetSize struct {
 	Size  uint64 `xdr:"unioncase=1"`
 }
 
+// TimeHow
+// DONT_CHANGE        = 0
+// SET_TO_SERVER_TIME = 1
+// SET_TO_CLIENT_TIME = 2
 type TimeHow int
 
 const (
@@ -87,6 +112,11 @@ const (
 type SetTime struct {
 	SetIt TimeHow  `xdr:"union"`
 	Time  NFS3Time `xdr:"unioncase=2"` //SetToClientTime
+}
+
+type Sattrguard3 struct {
+	Check int      `xdr:"union"`
+	Time  NFS3Time //SetToClientTime
 }
 
 type NFS3Time struct {
@@ -192,7 +222,7 @@ func (e *EntryPlus) Sys() interface{} {
 		return 0
 	}
 
-	return e.FileId
+	return &e.Attr.Attr
 }
 
 type WccData struct {
@@ -233,73 +263,14 @@ func DialService(addr string, prog rpc.Mapping) (*rpc.Client, error) {
 		return nil, err
 	}
 
-	client, err := dialService(addr, port)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
+	return DialServiceAtPort(addr, port)
 }
 
-func dialService(addr string, port int) (*rpc.Client, error) {
-	var (
-		ldr    *net.TCPAddr
-		client *rpc.Client
-	)
-
+func DialServiceAtPort(addr string, port int) (*rpc.Client, error) {
 	usr, err := user.Current()
-
+	raddr := fmt.Sprintf("%s:%d", addr, port)
 	// Unless explicitly configured, the target will likely reject connections
 	// from non-privileged ports.
-	if err == nil && usr.Uid == "0" {
-		r1 := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-		var p int
-		for {
-			p = r1.Intn(1024)
-			if p < 0 {
-				continue
-			}
-
-			ldr = &net.TCPAddr{
-				Port: p,
-			}
-
-			raddr := fmt.Sprintf("%s:%d", addr, port)
-			util.Debugf("Connecting to %s", raddr)
-
-			client, err = rpc.DialTCP("tcp", ldr, raddr)
-			if err == nil {
-				break
-			}
-			// bind error, try again
-			if isAddrInUse(err) {
-				continue
-			}
-
-			return nil, err
-		}
-
-		util.Debugf("using random port %d -> %d", p, port)
-	} else {
-		raddr := fmt.Sprintf("%s:%d", addr, port)
-		util.Debugf("Connecting to %s from unprivileged port", raddr)
-
-		client, err = rpc.DialTCP("tcp", ldr, raddr)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return client, nil
-}
-
-func isAddrInUse(err error) bool {
-	if er, ok := (err.(*net.OpError)); ok {
-		if syser, ok := er.Err.(*os.SyscallError); ok {
-			return syser.Err == syscall.EADDRINUSE
-		}
-	}
-
-	return false
+	util.Debugf("Connecting to %s", raddr)
+	return rpc.DialTCP("tcp", raddr, err == nil && usr.Uid == "0")
 }

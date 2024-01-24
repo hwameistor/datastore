@@ -91,7 +91,7 @@ spec:
                   export:
                     type: string
                   rootdir:
-                    default: /
+                    default: .
                     type: string
                 required:
                 - export

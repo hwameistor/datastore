@@ -135,12 +135,12 @@ github.com/sirupsen/logrus
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b
-## explicit
-github.com/vmware/go-nfs-client/nfs
-github.com/vmware/go-nfs-client/nfs/rpc
-github.com/vmware/go-nfs-client/nfs/util
-github.com/vmware/go-nfs-client/nfs/xdr
+# github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00
+## explicit; go 1.19
+github.com/willscott/go-nfs-client/nfs
+github.com/willscott/go-nfs-client/nfs/rpc
+github.com/willscott/go-nfs-client/nfs/util
+github.com/willscott/go-nfs-client/nfs/xdr
 # golang.org/x/crypto v0.16.0
 ## explicit; go 1.18
 golang.org/x/crypto/argon2
