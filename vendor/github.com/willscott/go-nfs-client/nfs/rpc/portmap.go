@@ -6,7 +6,7 @@ package rpc
 import (
 	"fmt"
 
-	"github.com/vmware/go-nfs-client/nfs/xdr"
+	"github.com/willscott/go-nfs-client/nfs/xdr"
 )
 
 // PORTMAP
@@ -72,7 +72,7 @@ func (p *Portmapper) Getport(mapping Mapping) (int, error) {
 }
 
 func DialPortmapper(net, host string) (*Portmapper, error) {
-	client, err := DialTCP(net, nil, fmt.Sprintf("%s:%d", host, PmapPort))
+	client, err := DialTCP(net, fmt.Sprintf("%s:%d", host, PmapPort), false)
 	if err != nil {
 		return nil, err
 	}

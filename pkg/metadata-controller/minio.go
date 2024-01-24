@@ -22,7 +22,6 @@ func newMinIOClient(config *datastorev1alpha1.MinIOSpec) (*minio.Client, error) 
 }
 
 func (mgr *storageBackendManager) _checkConnectionForMinIO(backend *datastorev1alpha1.StorageBackend) (bool, error) {
-	log.WithFields(log.Fields{"backend": backend.Name}).Debug("Checking connection for a MinIO storage backend")
 	if backend.Spec.MinIO == nil {
 		return false, fmt.Errorf("invaild MinIO spec info")
 	}
@@ -61,7 +60,7 @@ func (mgr *storageBackendManager) handleStorageBackendForMinIO(backend *datastor
 		if backend.Status.Error != err.Error() {
 			backend.Status.Error = err.Error()
 			if _, err := mgr.dsClientSet.DatastoreV1alpha1().StorageBackends().UpdateStatus(ctx, backend, metav1.UpdateOptions{}); err != nil {
-				log.WithField("Message", backend.Status.Error).WithError(err).Error("Failed to update storage backend")
+				log.WithField("Message", backend.Status.Error).WithError(err).Error("Failed to update status of storage backend")
 			}
 		}
 		return err

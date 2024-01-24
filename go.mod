@@ -27,7 +27,7 @@ require (
 
 require (
 	github.com/minio/minio-go/v7 v7.0.66
-	github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b
+	github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00
 )
 
 require (

@@ -41,7 +41,7 @@ type MinIOSpec struct {
 type NFSSpec struct {
 	Endpoint string `json:"endpoint,omitempty"`
 	Export   string `json:"export"`
-	// +kubebuilder:default:=/
+	// +kubebuilder:default:=.
 	RootDir string `json:"rootdir"`
 }
 
