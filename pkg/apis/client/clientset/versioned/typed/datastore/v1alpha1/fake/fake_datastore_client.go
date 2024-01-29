@@ -12,6 +12,10 @@ type FakeDatastoreV1alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeDatastoreV1alpha1) DataLoadRequests() v1alpha1.DataLoadRequestInterface {
+	return &FakeDataLoadRequests{c}
+}
+
 func (c *FakeDatastoreV1alpha1) StorageBackends() v1alpha1.StorageBackendInterface {
 	return &FakeStorageBackends{c}
 }
