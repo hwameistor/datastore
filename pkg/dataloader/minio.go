@@ -27,18 +27,19 @@ func (dl *minioDataLoader) newClient(config *datastorev1alpha1.MinIOSpec) (*mini
 
 func (dlr *minioDataLoader) Load(request *datastorev1alpha1.DataLoadRequest, rootDir string) error {
 
+	spec := request.Spec.MinIO
 	log.WithFields(log.Fields{"request": request.Name}).Debug("Handling a MinIO data loading request ...")
 	// Initialize minio client object.
-	minioClient, err := dlr.newClient(request.Spec.MinIO)
+	minioClient, err := dlr.newClient(spec)
 	if err != nil {
-		log.WithField("endpoint", request.Spec.MinIO.Endpoint).WithError(err).Error("Failed to setup the minio client")
+		log.WithField("endpoint", spec.Endpoint).WithError(err).Error("Failed to setup the minio client")
 		return err
 	}
 
 	ctx := context.Background()
-	for obj := range minioClient.ListObjects(ctx, request.Spec.MinIO.Bucket, minio.ListObjectsOptions{Prefix: request.Spec.MinIO.Prefix, Recursive: true}) {
+	for obj := range minioClient.ListObjects(ctx, spec.Bucket, minio.ListObjectsOptions{Prefix: spec.Prefix, Recursive: true}) {
 		localFilePath := fmt.Sprintf("%s/%s", rootDir, obj.Key)
-		if err := minioClient.FGetObject(ctx, request.Spec.MinIO.Bucket, obj.Key, localFilePath, minio.GetObjectOptions{}); err != nil {
+		if err := minioClient.FGetObject(ctx, spec.Bucket, obj.Key, localFilePath, minio.GetObjectOptions{}); err != nil {
 			log.WithFields(log.Fields{"request": request.Name, "obj": obj.Key}).WithError(err).Error("Failed to download an object")
 			return err
 		}

@@ -4,9 +4,9 @@ metadata:
   name: minio-llm
 spec:
   type: minio
-  node: k8s-node1
+  node: k8s-node2
   minio:
-    endpoint: 127.0.0.1:9000
+    endpoint: 10.6.113.100:30000
     bucket: llm
-    secretAccessKey: 6nTHn4ujDp0SRc3rKoPC0CpoDdZLLveYg8eimcKJ
-    accessKeyId: AvyEJhLGWTnp4KvU18bM
+    secretAccessKey: 1algGQjjeVXPFVqQJtLGUmooimUmMpQYAFa0mvai
+    accessKeyId: rnwVgoxBT1pGvEkeuNDA
