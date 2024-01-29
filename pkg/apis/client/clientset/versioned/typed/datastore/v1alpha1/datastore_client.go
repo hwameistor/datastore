@@ -10,12 +10,17 @@ import (
 
 type DatastoreV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	DataLoadRequestsGetter
 	StorageBackendsGetter
 }
 
 // DatastoreV1alpha1Client is used to interact with features provided by the datastore.io group.
 type DatastoreV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *DatastoreV1alpha1Client) DataLoadRequests() DataLoadRequestInterface {
+	return newDataLoadRequests(c)
 }
 
 func (c *DatastoreV1alpha1Client) StorageBackends() StorageBackendInterface {

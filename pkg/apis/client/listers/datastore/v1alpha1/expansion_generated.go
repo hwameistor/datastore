@@ -2,6 +2,10 @@
 
 package v1alpha1
 
+// DataLoadRequestListerExpansion allows custom methods to be added to
+// DataLoadRequestLister.
+type DataLoadRequestListerExpansion interface{}
+
 // StorageBackendListerExpansion allows custom methods to be added to
 // StorageBackendLister.
 type StorageBackendListerExpansion interface{}

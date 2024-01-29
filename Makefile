@@ -15,13 +15,13 @@ vendor:
 	go mod vendor
 
 .PHONY: compile
-compile: compile_metadata_controller
+compile: compile_metadata_controller compile_dataloader
 
 .PHONY: build
-build: build_metadata_controller_image
+build: build_metadata_controller_image build_dataloader_image
 
 .PHONY: run
-run: run_metadata_controller
+run: run_dataloader
 
 #### for METADATA_CONTROLLER #########
 METADATA_CONTROLLER_MODULE_NAME = metadata-controller
@@ -61,6 +61,44 @@ release_metadata_controller:
 	# push to a public registry
 	${MUILT_ARCH_PUSH_CMD} -i ${METADATA_CONTROLLER_IMAGE_NAME}:${RELEASE_TAG}
 
+
+#### for DATALOADER #########
+DATALOADER_MODULE_NAME = dataloader
+DATALOADER_BUILD_INPUT = ${CMDS_DIR}/${DATALOADER_MODULE_NAME}/main.go
+.PHONY: run_dataloader
+run_dataloader:
+	go run ${BUILD_OPTIONS} ${DATALOADER_BUILD_INPUT}
+
+.PHONY: compile_dataloader
+compile_dataloader:
+	GOARCH=amd64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATALOADER_BUILD_OUTPUT} ${DATALOADER_BUILD_INPUT}
+
+.PHONY: compile_dataloader_arm64
+compile_dataloader_arm64:
+	GOARCH=arm64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATALOADER_BUILD_OUTPUT} ${DATALOADER_BUILD_INPUT}
+
+.PHONY: build_dataloader_image
+build_dataloader_image:
+	@echo "Build dataloader image ${DATALOADER_IMAGE_NAME}:${IMAGE_TAG}"
+	${DOCKER_MAKE_CMD} make compile_dataloader
+	docker build -t ${DATALOADER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATALOADER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
+
+.PHONY: build_dataloader_image_arm64
+build_dataloader_image_arm64:
+	@echo "Build dataloader image ${DATALOADER_IMAGE_NAME}:${IMAGE_TAG}"
+	${DOCKER_MAKE_CMD} make compile_dataloader_arm64
+	${DOCKER_BUILDX_CMD_ARM64} -t ${DATALOADER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATALOADER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
+
+.PHONY: release_dataloader
+release_dataloader:
+	# build for amd64 version
+	${DOCKER_MAKE_CMD} make compile_dataloader
+	${DOCKER_BUILDX_CMD_AMD64} -t ${DATALOADER_IMAGE_NAME}:${RELEASE_TAG}-amd64 -f ${DATALOADER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
+	# build for arm64 version
+	${DOCKER_MAKE_CMD} make compile_dataloader_arm64
+	${DOCKER_BUILDX_CMD_ARM64} -t ${DATALOADER_IMAGE_NAME}:${RELEASE_TAG}-arm64 -f ${DATALOADER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
+	# push to a public registry
+	${MUILT_ARCH_PUSH_CMD} -i ${DATALOADER_IMAGE_NAME}:${RELEASE_TAG}
 
 
 .PHONY: apis

@@ -37,6 +37,8 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=datastore.io, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("dataloadrequests"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Datastore().V1alpha1().DataLoadRequests().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("storagebackends"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Datastore().V1alpha1().StorageBackends().Informer()}, nil
 

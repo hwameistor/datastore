@@ -8,6 +8,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// DataLoadRequests returns a DataLoadRequestInformer.
+	DataLoadRequests() DataLoadRequestInformer
 	// StorageBackends returns a StorageBackendInformer.
 	StorageBackends() StorageBackendInformer
 }
@@ -21,6 +23,11 @@ type version struct {
 // New returns a new Interface.
 func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakListOptions internalinterfaces.TweakListOptionsFunc) Interface {
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
+}
+
+// DataLoadRequests returns a DataLoadRequestInformer.
+func (v *version) DataLoadRequests() DataLoadRequestInformer {
+	return &dataLoadRequestInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // StorageBackends returns a StorageBackendInformer.
