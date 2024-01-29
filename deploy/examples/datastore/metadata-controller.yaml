@@ -12,7 +12,8 @@ spec:
       labels:
         app: datastore-metadata-controller
     spec:
+      serviceAccountName: admin
       containers:
         - name: controller
-          image: lsun7927/datastore-metadata-controller:99.9.9
+          image: lsun7927/metadata-controller:v001
           imagePullPolicy: IfNotPresent

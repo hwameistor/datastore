@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: llm-trainer
+spec:
+  selector:
+    matchLabels:
+      app: llm-trainer
+      app.kubernetes.io/name: llm-trainer
+  replicas: 1
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: llm-trainer
+        app.kubernetes.io/name: llm-trainer
+    spec:
+      serviceAccountName: admin
+      containers:
+      - image: busybox
+        name: trainer
+        args:
+          - tail
+          - -f
+          - /dev/null
+        volumeMounts:
+        - name: data
+          mountPath: /llm/data
+        - name: checkpoints
+          mountPath: /llm/checkpoints
+        - name: models
+          mountPath: /llm/models
+      - name: dataloader
+        image: lsun7927/dataloader:v001
+        args:
+          - --nodename=$(NODENAME)
+          - --targetDir=/llm/data
+          - --checkpointDir=/llm/checkpoints
+          #- --modelsDir=/llm/models
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: NODENAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+        volumeMounts:
+        - name: data
+          mountPath: /llm/data
+        - name: checkpoints
+          mountPath: /llm/checkpoints
+        - name: models
+          mountPath: /llm/models
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: llm-trainer
+        app.kubernetes.io/name: llm-trainer
+    spec:
+      storageClassName: hwameistor-storage-lvm-hdd
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: checkpoints
+      labels:
+        app: llm-trainer
+        app.kubernetes.io/name: llm-trainer
+    spec:
+      storageClassName: hwameistor-storage-lvm-hdd
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: models
+      labels:
+        app: llm-trainer
+        app.kubernetes.io/name: llm-trainer
+    spec:
+      storageClassName: hwameistor-storage-lvm-hdd
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
