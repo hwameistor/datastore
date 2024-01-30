@@ -15,5 +15,5 @@ spec:
       serviceAccountName: admin
       containers:
         - name: controller
-          image: lsun7927/metadata-controller:v001
+          image: lsun7927/metadata-controller:v002
           imagePullPolicy: IfNotPresent

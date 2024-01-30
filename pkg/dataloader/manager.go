@@ -100,6 +100,8 @@ func (mgr *Manager) handleDataLoadRequest(request *datastorev1alpha1.DataLoadReq
 	request.Status.LoadingStartTime = metav1.NewTime(time.Now())
 	if request.Spec.Type == datastorev1alpha1.StorageBackendTypeMinIO {
 		err = newDataLoaderForMinIO().Load(request, mgr.localDataRootDir)
+	} else if request.Spec.Type == datastorev1alpha1.StorageBackendTypeNFS {
+		err = newDataLoaderForNFS().Load(request, mgr.localDataRootDir)
 	}
 
 	if err != nil {

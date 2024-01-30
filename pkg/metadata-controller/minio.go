@@ -3,23 +3,13 @@ package metadatacontroller
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	datastorev1alpha1 "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
-	minio "github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/hwameistor/datastore/pkg/storage/minio"
 )
-
-func newMinIOClient(config *datastorev1alpha1.MinIOSpec) (*minio.Client, error) {
-	return minio.New(config.Endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(config.AccessKeyID, config.SecretAccessKey, ""),
-		Secure: false,
-	})
-}
 
 func (mgr *storageBackendManager) _checkConnectionForMinIO(backend *datastorev1alpha1.StorageBackend) (bool, error) {
 	if backend.Spec.MinIO == nil {
@@ -27,18 +17,13 @@ func (mgr *storageBackendManager) _checkConnectionForMinIO(backend *datastorev1a
 	}
 
 	// Initialize minio client object.
-	minioClient, err := newMinIOClient(backend.Spec.MinIO)
+	minioClient, err := minio.NewClient(backend.Spec.MinIO)
 	if err != nil {
 		log.WithField("endpoint", backend.Spec.MinIO.Endpoint).WithError(err).Error("Failed to setup the minio client")
 		return false, err
 	}
 
-	hcancel, _ := minioClient.HealthCheck(1 * time.Second)
-	defer hcancel()
-
-	time.Sleep(3 * time.Second)
-
-	return minioClient.IsOnline(), nil
+	return minio.IsConnected(minioClient, backend.Spec.MinIO)
 
 }
 
@@ -46,15 +31,16 @@ func (mgr *storageBackendManager) handleStorageBackendForMinIO(backend *datastor
 
 	log.WithFields(log.Fields{"backend": backend.Name}).Debug("Handling a MinIO storage backend ...")
 	// Initialize minio client object.
-	minioClient, err := newMinIOClient(backend.Spec.MinIO)
+	minioClient, err := minio.NewClient(backend.Spec.MinIO)
 	if err != nil {
 		log.WithField("endpoint", backend.Spec.MinIO.Endpoint).WithError(err).Error("Failed to setup the minio client")
 		return err
 	}
 
 	log.WithFields(log.Fields{"bucket": backend.Spec.MinIO.Bucket}).Debug("Checking for the bucket ...")
+
 	ctx := context.Background()
-	exists, err := minioClient.BucketExists(ctx, backend.Spec.MinIO.Bucket)
+	exists, err := minio.IsBucketExists(minioClient, backend.Spec.MinIO.Bucket)
 	if err != nil {
 		log.WithField("bucket", backend.Spec.MinIO.Bucket).WithError(err).Error("Failed to check if the bucket exists or not")
 		if backend.Status.Error != err.Error() {
@@ -86,22 +72,9 @@ func (mgr *storageBackendManager) handleStorageBackendForMinIO(backend *datastor
 	}
 	log.WithFields(log.Fields{"bucket": backend.Spec.MinIO.Bucket}).Debug("The bucket exists")
 
-	return mgr.refreshDataFromStorageBackendForMinIO(minioClient, backend)
-}
-
-func (mgr *storageBackendManager) refreshDataFromStorageBackendForMinIO(minioClient *minio.Client, backend *datastorev1alpha1.StorageBackend) error {
-	ctx := context.Background()
-
-	objs := []*DataObject{}
-	cnt := 0
-	for obj := range minioClient.ListObjects(ctx, backend.Spec.MinIO.Bucket, minio.ListObjectsOptions{Prefix: backend.Spec.MinIO.Prefix, Recursive: true}) {
-		cnt++
-		items := strings.Split(obj.Key, "/")
-		objs = append(objs, &DataObject{Path: obj.Key, Name: items[len(items)-1], Size: obj.Size, MTime: obj.LastModified})
-	}
-
-	log.WithField("total", cnt).Debug("Listed the objects")
+	objs := minio.LoadObjectMetadata(minioClient, backend.Spec.MinIO)
 
 	mgr.globalView.UpdateDataObjects(backend, objs)
+
 	return nil
 }
