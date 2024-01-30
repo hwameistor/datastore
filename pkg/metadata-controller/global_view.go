@@ -4,43 +4,16 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
+	datastoreapis "github.com/hwameistor/datastore/pkg/apis"
 	datastorev1alpha1 "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
 	log "github.com/sirupsen/logrus"
 )
 
 type GlobalViewFileSystem struct {
-	Servers map[string]*DataServer
+	Servers map[string]*datastoreapis.DataServer
 
 	lock sync.Mutex
-}
-
-type DataServer struct {
-	Type      string
-	Connected bool
-	Endpoint  string
-
-	SubDirs map[string]*DataDirectory
-
-	AllDirs map[string]*DataDirectory
-	AllObjs map[string]*DataObject
-}
-
-type DataDirectory struct {
-	Name   string
-	Path   string
-	Prefix string // s3 bucket only
-
-	SubDirs map[string]*DataDirectory
-	Objects map[string]*DataObject
-}
-
-type DataObject struct {
-	Name  string
-	Path  string
-	Size  int64
-	MTime time.Time
 }
 
 func (gs *GlobalViewFileSystem) UpdateDataServer(backend *datastorev1alpha1.StorageBackend) {
@@ -101,7 +74,7 @@ func (gs *GlobalViewFileSystem) RemoveDataServer(backend *datastorev1alpha1.Stor
 	gs.lock.Unlock()
 }
 
-func (gs *GlobalViewFileSystem) resetDataServer(backend *datastorev1alpha1.StorageBackend) *DataServer {
+func (gs *GlobalViewFileSystem) resetDataServer(backend *datastorev1alpha1.StorageBackend) *datastoreapis.DataServer {
 	gs.lock.Lock()
 	defer gs.lock.Unlock()
 
@@ -115,76 +88,76 @@ func (gs *GlobalViewFileSystem) resetDataServer(backend *datastorev1alpha1.Stora
 	return nil
 }
 
-func (gs *GlobalViewFileSystem) _resetDataServerForMinIO(backend *datastorev1alpha1.StorageBackend) *DataServer {
+func (gs *GlobalViewFileSystem) _resetDataServerForMinIO(backend *datastorev1alpha1.StorageBackend) *datastoreapis.DataServer {
 
 	if len(gs.Servers) == 0 {
-		gs.Servers = map[string]*DataServer{}
+		gs.Servers = map[string]*datastoreapis.DataServer{}
 	}
 	if gs.Servers[backend.Name] == nil {
-		gs.Servers[backend.Name] = &DataServer{
+		gs.Servers[backend.Name] = &datastoreapis.DataServer{
 			Type:      backend.Spec.Type,
 			Connected: backend.Status.Connected,
 			Endpoint:  backend.Spec.MinIO.Endpoint,
-			SubDirs:   map[string]*DataDirectory{},
-			AllDirs:   map[string]*DataDirectory{},
-			AllObjs:   map[string]*DataObject{},
+			SubDirs:   map[string]*datastoreapis.DataDirectory{},
+			AllDirs:   map[string]*datastoreapis.DataDirectory{},
+			AllObjs:   map[string]*datastoreapis.DataObject{},
 		}
 	} else {
 		gs.Servers[backend.Name].Endpoint = backend.Spec.MinIO.Endpoint
 		gs.Servers[backend.Name].Connected = backend.Status.Connected
-		gs.Servers[backend.Name].SubDirs = map[string]*DataDirectory{}
-		gs.Servers[backend.Name].AllDirs = map[string]*DataDirectory{}
-		gs.Servers[backend.Name].AllObjs = map[string]*DataObject{}
+		gs.Servers[backend.Name].SubDirs = map[string]*datastoreapis.DataDirectory{}
+		gs.Servers[backend.Name].AllDirs = map[string]*datastoreapis.DataDirectory{}
+		gs.Servers[backend.Name].AllObjs = map[string]*datastoreapis.DataObject{}
 	}
 
 	minioInfo := backend.Spec.MinIO
-	bucket := DataDirectory{
+	bucket := datastoreapis.DataDirectory{
 		Name:    minioInfo.Bucket,
 		Prefix:  minioInfo.Prefix,
 		Path:    minioInfo.Bucket + "/",
-		SubDirs: map[string]*DataDirectory{},
-		Objects: map[string]*DataObject{},
+		SubDirs: map[string]*datastoreapis.DataDirectory{},
+		Objects: map[string]*datastoreapis.DataObject{},
 	}
 	gs.Servers[backend.Name].SubDirs[minioInfo.Bucket] = &bucket
 
 	return gs.Servers[backend.Name]
 }
 
-func (gs *GlobalViewFileSystem) _resetDataServerForNFS(backend *datastorev1alpha1.StorageBackend) *DataServer {
+func (gs *GlobalViewFileSystem) _resetDataServerForNFS(backend *datastorev1alpha1.StorageBackend) *datastoreapis.DataServer {
 
 	if len(gs.Servers) == 0 {
-		gs.Servers = map[string]*DataServer{}
+		gs.Servers = map[string]*datastoreapis.DataServer{}
 	}
 	if gs.Servers[backend.Name] == nil {
-		gs.Servers[backend.Name] = &DataServer{
+		gs.Servers[backend.Name] = &datastoreapis.DataServer{
 			Type:      backend.Spec.Type,
 			Connected: backend.Status.Connected,
 			Endpoint:  backend.Spec.NFS.Endpoint,
-			SubDirs:   map[string]*DataDirectory{},
-			AllDirs:   map[string]*DataDirectory{},
-			AllObjs:   map[string]*DataObject{},
+			SubDirs:   map[string]*datastoreapis.DataDirectory{},
+			AllDirs:   map[string]*datastoreapis.DataDirectory{},
+			AllObjs:   map[string]*datastoreapis.DataObject{},
 		}
 	} else {
 		gs.Servers[backend.Name].Endpoint = backend.Spec.NFS.Endpoint
 		gs.Servers[backend.Name].Connected = backend.Status.Connected
-		gs.Servers[backend.Name].SubDirs = map[string]*DataDirectory{}
-		gs.Servers[backend.Name].AllDirs = map[string]*DataDirectory{}
-		gs.Servers[backend.Name].AllObjs = map[string]*DataObject{}
+		gs.Servers[backend.Name].SubDirs = map[string]*datastoreapis.DataDirectory{}
+		gs.Servers[backend.Name].AllDirs = map[string]*datastoreapis.DataDirectory{}
+		gs.Servers[backend.Name].AllObjs = map[string]*datastoreapis.DataObject{}
 	}
 
 	spec := backend.Spec.NFS
-	rootdir := DataDirectory{
+	rootdir := datastoreapis.DataDirectory{
 		Name:    spec.RootDir,
 		Path:    spec.RootDir + "/",
-		SubDirs: map[string]*DataDirectory{},
-		Objects: map[string]*DataObject{},
+		SubDirs: map[string]*datastoreapis.DataDirectory{},
+		Objects: map[string]*datastoreapis.DataObject{},
 	}
 	gs.Servers[backend.Name].SubDirs[spec.RootDir] = &rootdir
 
 	return gs.Servers[backend.Name]
 }
 
-func (gs *GlobalViewFileSystem) UpdateDataObjects(backend *datastorev1alpha1.StorageBackend, objs []*DataObject) {
+func (gs *GlobalViewFileSystem) UpdateDataObjects(backend *datastorev1alpha1.StorageBackend, objs []*datastoreapis.DataObject) {
 	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeMinIO {
 		gs._updateDataObjectsForMinIO(backend, objs)
 	} else if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeNFS {
@@ -192,7 +165,7 @@ func (gs *GlobalViewFileSystem) UpdateDataObjects(backend *datastorev1alpha1.Sto
 	}
 }
 
-func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(backend *datastorev1alpha1.StorageBackend, objs []*DataObject) {
+func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(backend *datastorev1alpha1.StorageBackend, objs []*datastoreapis.DataObject) {
 
 	server := gs.resetDataServer(backend)
 	bucket := server.SubDirs[backend.Spec.MinIO.Bucket]
@@ -215,11 +188,11 @@ func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(backend *datastorev1a
 				dirPath = dirPath + items[pos] + "/"
 				if upDir.SubDirs[dirPath] == nil {
 					fmt.Printf("Created a directory: %s\n", dirPath)
-					upDir.SubDirs[dirPath] = &DataDirectory{
+					upDir.SubDirs[dirPath] = &datastoreapis.DataDirectory{
 						Name:    items[pos],
 						Path:    dirPath,
-						SubDirs: map[string]*DataDirectory{},
-						Objects: map[string]*DataObject{},
+						SubDirs: map[string]*datastoreapis.DataDirectory{},
+						Objects: map[string]*datastoreapis.DataObject{},
 					}
 				}
 				upDir = upDir.SubDirs[dirPath]
@@ -230,7 +203,7 @@ func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(backend *datastorev1a
 	}
 }
 
-func (gs *GlobalViewFileSystem) _updateDataObjectsForNFS(backend *datastorev1alpha1.StorageBackend, objs []*DataObject) {
+func (gs *GlobalViewFileSystem) _updateDataObjectsForNFS(backend *datastorev1alpha1.StorageBackend, objs []*datastoreapis.DataObject) {
 
 	server := gs.resetDataServer(backend)
 	rootdir := server.SubDirs[backend.Spec.NFS.RootDir]
@@ -254,11 +227,11 @@ func (gs *GlobalViewFileSystem) _updateDataObjectsForNFS(backend *datastorev1alp
 				dirPath = dirPath + items[pos] + "/"
 				if upDir.SubDirs[dirPath] == nil {
 					fmt.Printf("Created a directory: %s\n", dirPath)
-					upDir.SubDirs[dirPath] = &DataDirectory{
+					upDir.SubDirs[dirPath] = &datastoreapis.DataDirectory{
 						Name:    items[pos],
 						Path:    dirPath,
-						SubDirs: map[string]*DataDirectory{},
-						Objects: map[string]*DataObject{},
+						SubDirs: map[string]*datastoreapis.DataDirectory{},
+						Objects: map[string]*datastoreapis.DataObject{},
 					}
 				}
 				upDir = upDir.SubDirs[dirPath]
@@ -276,7 +249,7 @@ func dumpGlobalView(gv *GlobalViewFileSystem) {
 	}
 }
 
-func dumpServer(name string, svr *DataServer) {
+func dumpServer(name string, svr *datastoreapis.DataServer) {
 	fmt.Printf("Server:  Backend: %s, Type: %s, Endpoint: %s, Connected: %t\n", name, svr.Type, svr.Endpoint, svr.Connected)
 	for _, dir := range svr.SubDirs {
 		fmt.Printf("      Dir: Path: %s, Type: Root\n", dir.Path)
@@ -287,7 +260,7 @@ func dumpServer(name string, svr *DataServer) {
 	}
 }
 
-func dumpDir(dir *DataDirectory) {
+func dumpDir(dir *datastoreapis.DataDirectory) {
 	fmt.Printf("Directory: Path: %s\n", dir.Path)
 	for _, dir := range dir.SubDirs {
 		fmt.Printf("      Dir: Path: %s\n", dir.Path)
