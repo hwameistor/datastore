@@ -1,0 +1,3 @@
+FROM alpine:latest
+
+RUN cd /tmp && wget https://github.com/juicedata/juicesync/releases/download/v1.0.4/juicesync-1.1.1-linux-arm64.tar.gz && tar zxf juicesync-1.1.1-linux-arm64.tar.gz && mv juicesync /usr/bin

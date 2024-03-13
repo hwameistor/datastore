@@ -15,7 +15,7 @@ import (
 
 func NewClient(config *datastorev1alpha1.MinIOSpec) (*minio.Client, error) {
 	return minio.New(config.Endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(config.AccessKeyID, config.SecretAccessKey, ""),
+		Creds:  credentials.NewStaticV4(config.AccessKey, config.SecretKey, ""),
 		Secure: false,
 	})
 }
@@ -44,14 +44,29 @@ func LoadObjectMetadata(client *minio.Client, spec *datastorev1alpha1.MinIOSpec)
 	return objs
 }
 
-func LoadObjectToLocal(client *minio.Client, spec *datastorev1alpha1.MinIOSpec, rootDir string) error {
+func DownloadObject(client *minio.Client, bucket string, objName string, localFilePath string) error {
 
-	ctx := context.Background()
-	for obj := range client.ListObjects(ctx, spec.Bucket, minio.ListObjectsOptions{Prefix: spec.Prefix, Recursive: true}) {
-		localFilePath := fmt.Sprintf("%s/%s", rootDir, obj.Key)
-		if err := client.FGetObject(ctx, spec.Bucket, obj.Key, localFilePath, minio.GetObjectOptions{}); err != nil {
-			return fmt.Errorf("failed to load object %s with error : %s", obj.Key, err.Error())
-		}
+	existed, err := IsBucketExists(client, bucket)
+	if err != nil {
+		return err
 	}
-	return nil
+	if !existed {
+		return fmt.Errorf("bucket not found")
+	}
+
+	return client.FGetObject(context.Background(), bucket, objName, localFilePath, minio.GetObjectOptions{Checksum: true})
+}
+
+func UploadObject(client *minio.Client, bucket string, objName string, localFilePath string) error {
+
+	existed, err := IsBucketExists(client, bucket)
+	if err != nil {
+		return err
+	}
+	if !existed {
+		return fmt.Errorf("bucket not found")
+	}
+
+	_, err = client.FPutObject(context.Background(), bucket, objName, localFilePath, minio.PutObjectOptions{})
+	return err
 }

@@ -2,6 +2,10 @@
 
 package v1alpha1
 
+type BaseModelExpansion interface{}
+
+type CheckpointExpansion interface{}
+
 type DataLoadRequestExpansion interface{}
 
-type StorageBackendExpansion interface{}
+type DataSourceExpansion interface{}

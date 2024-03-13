@@ -8,12 +8,17 @@ spec:
     kind: DataLoadRequest
     listKind: DataLoadRequestList
     plural: dataloadrequests
+    shortNames:
+    - dlr
     singular: dataloadrequest
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.type
-      name: Type
+    - jsonPath: .spec.dataSource
+      name: DataSource
+      type: string
+    - jsonPath: .spec.subDir
+      name: SubDir
       type: string
     - jsonPath: .spec.retry
       name: Retry
@@ -61,50 +66,15 @@ spec:
           spec:
             description: DataLoadRequestSpec defines the desired state of DataLoadRequest
             properties:
-              ftp:
-                properties:
-                  endpoint:
-                    type: string
-                  rootdir:
-                    default: /
-                    type: string
-                required:
-                - rootdir
-                type: object
-              minio:
-                properties:
-                  accessKeyId:
-                    type: string
-                  bucket:
-                    type: string
-                  endpoint:
-                    type: string
-                  prefix:
-                    type: string
-                  region:
-                    type: string
-                  secretAccessKey:
-                    type: string
-                required:
-                - accessKeyId
-                - bucket
-                - secretAccessKey
-                type: object
-              nfs:
-                properties:
-                  endpoint:
-                    type: string
-                  export:
-                    type: string
-                  rootdir:
-                    default: .
-                    type: string
-                required:
-                - export
-                - rootdir
-                type: object
+              dataSource:
+                description: name of the data source
+                type: string
+              isGlobal:
+                description: indicate if the request is for all or not
+                type: boolean
               node:
-                description: name of the node who will loads the data
+                description: name of the node who will loads the data, and it works
+                  only when isglobal is false
                 type: string
               retry:
                 default: false
@@ -113,21 +83,14 @@ spec:
                 default: 1
                 format: int64
                 type: integer
-              type:
-                default: unknown
-                description: type of storage backend
-                enum:
-                - minio
-                - aws-s3
-                - nfs
-                - ftp
-                - unknown
+              subDir:
                 type: string
             required:
+            - dataSource
+            - isGlobal
             - node
             - retry
             - retryInterval
-            - type
             type: object
           status:
             description: DataLoadRequestStatus defines the observed state of DataLoadRequest

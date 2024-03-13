@@ -15,13 +15,13 @@ vendor:
 	go mod vendor
 
 .PHONY: compile
-compile: compile_metadata_controller compile_dataloader
+compile: compile_metadata_controller compile_datamanager
 
 .PHONY: build
-build: build_metadata_controller_image build_dataloader_image
+build: build_metadata_controller_image build_datamanager_image
 
 .PHONY: run
-run: run_dataloader
+run: run_datamanager
 
 #### for METADATA_CONTROLLER #########
 METADATA_CONTROLLER_MODULE_NAME = metadata-controller
@@ -62,43 +62,43 @@ release_metadata_controller:
 	${MUILT_ARCH_PUSH_CMD} -i ${METADATA_CONTROLLER_IMAGE_NAME}:${RELEASE_TAG}
 
 
-#### for DATALOADER #########
-DATALOADER_MODULE_NAME = dataloader
-DATALOADER_BUILD_INPUT = ${CMDS_DIR}/${DATALOADER_MODULE_NAME}/main.go
-.PHONY: run_dataloader
-run_dataloader:
-	go run ${BUILD_OPTIONS} ${DATALOADER_BUILD_INPUT}
+#### for DATAMANAGER #########
+DATAMANAGER_MODULE_NAME = datamanager
+DATAMANAGER_BUILD_INPUT = ${CMDS_DIR}/${DATAMANAGER_MODULE_NAME}/main.go
+.PHONY: run_datamanager
+run_datamanager:
+	go run ${BUILD_OPTIONS} ${DATAMANAGER_BUILD_INPUT} --isTrainMaster=true --isInitRole=true --baseModelLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/models --checkpointLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/checkpoints --checkpointLocalDirOnHost=/Users/liangsun/Downloads/checkpoints
 
-.PHONY: compile_dataloader
-compile_dataloader:
-	GOARCH=amd64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATALOADER_BUILD_OUTPUT} ${DATALOADER_BUILD_INPUT}
+.PHONY: compile_datamanager
+compile_datamanager:
+	GOARCH=amd64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATAMANAGER_BUILD_OUTPUT} ${DATAMANAGER_BUILD_INPUT}
 
-.PHONY: compile_dataloader_arm64
-compile_dataloader_arm64:
-	GOARCH=arm64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATALOADER_BUILD_OUTPUT} ${DATALOADER_BUILD_INPUT}
+.PHONY: compile_datamanager_arm64
+compile_datamanager_arm64:
+	GOARCH=arm64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATAMANAGER_BUILD_OUTPUT} ${DATAMANAGER_BUILD_INPUT}
 
-.PHONY: build_dataloader_image
-build_dataloader_image:
-	@echo "Build dataloader image ${DATALOADER_IMAGE_NAME}:${IMAGE_TAG}"
-	${DOCKER_MAKE_CMD} make compile_dataloader
-	docker build -t ${DATALOADER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATALOADER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
+.PHONY: build_datamanager_image
+build_datamanager_image:
+	@echo "Build datamanager image ${DATAMANAGER_IMAGE_NAME}:${IMAGE_TAG}"
+	${DOCKER_MAKE_CMD} make compile_datamanager
+	docker build -t ${DATAMANAGER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATAMANAGER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
 
-.PHONY: build_dataloader_image_arm64
-build_dataloader_image_arm64:
-	@echo "Build dataloader image ${DATALOADER_IMAGE_NAME}:${IMAGE_TAG}"
-	${DOCKER_MAKE_CMD} make compile_dataloader_arm64
-	${DOCKER_BUILDX_CMD_ARM64} -t ${DATALOADER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATALOADER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
+.PHONY: build_datamanager_image_arm64
+build_datamanager_image_arm64:
+	@echo "Build datamanager image ${DATAMANAGER_IMAGE_NAME}:${IMAGE_TAG}"
+	${DOCKER_MAKE_CMD} make compile_datamanager_arm64
+	${DOCKER_BUILDX_CMD_ARM64} -t ${DATAMANAGER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATAMANAGER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
 
-.PHONY: release_dataloader
-release_dataloader:
+.PHONY: release_datamanager
+release_datamanager:
 	# build for amd64 version
-	${DOCKER_MAKE_CMD} make compile_dataloader
-	${DOCKER_BUILDX_CMD_AMD64} -t ${DATALOADER_IMAGE_NAME}:${RELEASE_TAG}-amd64 -f ${DATALOADER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
+	${DOCKER_MAKE_CMD} make compile_datamanager
+	${DOCKER_BUILDX_CMD_AMD64} -t ${DATAMANAGER_IMAGE_NAME}:${RELEASE_TAG}-amd64 -f ${DATAMANAGER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
 	# build for arm64 version
-	${DOCKER_MAKE_CMD} make compile_dataloader_arm64
-	${DOCKER_BUILDX_CMD_ARM64} -t ${DATALOADER_IMAGE_NAME}:${RELEASE_TAG}-arm64 -f ${DATALOADER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
+	${DOCKER_MAKE_CMD} make compile_datamanager_arm64
+	${DOCKER_BUILDX_CMD_ARM64} -t ${DATAMANAGER_IMAGE_NAME}:${RELEASE_TAG}-arm64 -f ${DATAMANAGER_IMAGE_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
 	# push to a public registry
-	${MUILT_ARCH_PUSH_CMD} -i ${DATALOADER_IMAGE_NAME}:${RELEASE_TAG}
+	${MUILT_ARCH_PUSH_CMD} -i ${DATAMANAGER_IMAGE_NAME}:${RELEASE_TAG}
 
 
 .PHONY: apis
@@ -109,6 +109,15 @@ apis:
 builder:
 	docker build -t ${BUILDER_NAME}:${BUILDER_TAG} -f ${BUILDER_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
 	docker push ${BUILDER_NAME}:${BUILDER_TAG}
+
+.PHONY: juicesync
+juicesync:
+	${DOCKER_BUILDX_CMD_AMD64} -t ${JUICESYNC_NAME}:${JUICESYNC_TAG}-amd64 -f ${JUICESYNC_DOCKERFILE}.amd64 ${PROJECT_SOURCE_CODE_DIR}
+	# build for arm64 version
+	${DOCKER_BUILDX_CMD_ARM64} -t ${JUICESYNC_NAME}:${JUICESYNC_TAG}-arm64 -f ${JUICESYNC_DOCKERFILE}.arm64 ${PROJECT_SOURCE_CODE_DIR}
+	# push to a public registry
+	${MUILT_ARCH_PUSH_CMD} -i ${JUICESYNC_NAME}:${JUICESYNC_TAG}
+
 
 .PHONY: _gen-apis
 _gen-apis:

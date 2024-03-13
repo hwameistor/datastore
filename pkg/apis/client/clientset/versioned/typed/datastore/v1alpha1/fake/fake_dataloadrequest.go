@@ -17,6 +17,7 @@ import (
 // FakeDataLoadRequests implements DataLoadRequestInterface
 type FakeDataLoadRequests struct {
 	Fake *FakeDatastoreV1alpha1
+	ns   string
 }
 
 var dataloadrequestsResource = schema.GroupVersionResource{Group: "datastore.io", Version: "v1alpha1", Resource: "dataloadrequests"}
@@ -26,7 +27,8 @@ var dataloadrequestsKind = schema.GroupVersionKind{Group: "datastore.io", Versio
 // Get takes name of the dataLoadRequest, and returns the corresponding dataLoadRequest object, and an error if there is any.
 func (c *FakeDataLoadRequests) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.DataLoadRequest, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(dataloadrequestsResource, name), &v1alpha1.DataLoadRequest{})
+		Invokes(testing.NewGetAction(dataloadrequestsResource, c.ns, name), &v1alpha1.DataLoadRequest{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -36,7 +38,8 @@ func (c *FakeDataLoadRequests) Get(ctx context.Context, name string, options v1.
 // List takes label and field selectors, and returns the list of DataLoadRequests that match those selectors.
 func (c *FakeDataLoadRequests) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.DataLoadRequestList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(dataloadrequestsResource, dataloadrequestsKind, opts), &v1alpha1.DataLoadRequestList{})
+		Invokes(testing.NewListAction(dataloadrequestsResource, dataloadrequestsKind, c.ns, opts), &v1alpha1.DataLoadRequestList{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -57,13 +60,15 @@ func (c *FakeDataLoadRequests) List(ctx context.Context, opts v1.ListOptions) (r
 // Watch returns a watch.Interface that watches the requested dataLoadRequests.
 func (c *FakeDataLoadRequests) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(dataloadrequestsResource, opts))
+		InvokesWatch(testing.NewWatchAction(dataloadrequestsResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a dataLoadRequest and creates it.  Returns the server's representation of the dataLoadRequest, and an error, if there is any.
 func (c *FakeDataLoadRequests) Create(ctx context.Context, dataLoadRequest *v1alpha1.DataLoadRequest, opts v1.CreateOptions) (result *v1alpha1.DataLoadRequest, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(dataloadrequestsResource, dataLoadRequest), &v1alpha1.DataLoadRequest{})
+		Invokes(testing.NewCreateAction(dataloadrequestsResource, c.ns, dataLoadRequest), &v1alpha1.DataLoadRequest{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -73,7 +78,8 @@ func (c *FakeDataLoadRequests) Create(ctx context.Context, dataLoadRequest *v1al
 // Update takes the representation of a dataLoadRequest and updates it. Returns the server's representation of the dataLoadRequest, and an error, if there is any.
 func (c *FakeDataLoadRequests) Update(ctx context.Context, dataLoadRequest *v1alpha1.DataLoadRequest, opts v1.UpdateOptions) (result *v1alpha1.DataLoadRequest, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(dataloadrequestsResource, dataLoadRequest), &v1alpha1.DataLoadRequest{})
+		Invokes(testing.NewUpdateAction(dataloadrequestsResource, c.ns, dataLoadRequest), &v1alpha1.DataLoadRequest{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -84,7 +90,8 @@ func (c *FakeDataLoadRequests) Update(ctx context.Context, dataLoadRequest *v1al
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 func (c *FakeDataLoadRequests) UpdateStatus(ctx context.Context, dataLoadRequest *v1alpha1.DataLoadRequest, opts v1.UpdateOptions) (*v1alpha1.DataLoadRequest, error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(dataloadrequestsResource, "status", dataLoadRequest), &v1alpha1.DataLoadRequest{})
+		Invokes(testing.NewUpdateSubresourceAction(dataloadrequestsResource, "status", c.ns, dataLoadRequest), &v1alpha1.DataLoadRequest{})
+
 	if obj == nil {
 		return nil, err
 	}
@@ -94,13 +101,14 @@ func (c *FakeDataLoadRequests) UpdateStatus(ctx context.Context, dataLoadRequest
 // Delete takes name of the dataLoadRequest and deletes it. Returns an error if one occurs.
 func (c *FakeDataLoadRequests) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteAction(dataloadrequestsResource, name), &v1alpha1.DataLoadRequest{})
+		Invokes(testing.NewDeleteAction(dataloadrequestsResource, c.ns, name), &v1alpha1.DataLoadRequest{})
+
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeDataLoadRequests) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(dataloadrequestsResource, listOpts)
+	action := testing.NewDeleteCollectionAction(dataloadrequestsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.DataLoadRequestList{})
 	return err
@@ -109,7 +117,8 @@ func (c *FakeDataLoadRequests) DeleteCollection(ctx context.Context, opts v1.Del
 // Patch applies the patch and returns the patched dataLoadRequest.
 func (c *FakeDataLoadRequests) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.DataLoadRequest, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(dataloadrequestsResource, name, pt, data, subresources...), &v1alpha1.DataLoadRequest{})
+		Invokes(testing.NewPatchSubresourceAction(dataloadrequestsResource, c.ns, name, pt, data, subresources...), &v1alpha1.DataLoadRequest{})
+
 	if obj == nil {
 		return nil, err
 	}

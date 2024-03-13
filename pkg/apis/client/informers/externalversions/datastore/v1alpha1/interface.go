@@ -8,10 +8,14 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// BaseModels returns a BaseModelInformer.
+	BaseModels() BaseModelInformer
+	// Checkpoints returns a CheckpointInformer.
+	Checkpoints() CheckpointInformer
 	// DataLoadRequests returns a DataLoadRequestInformer.
 	DataLoadRequests() DataLoadRequestInformer
-	// StorageBackends returns a StorageBackendInformer.
-	StorageBackends() StorageBackendInformer
+	// DataSources returns a DataSourceInformer.
+	DataSources() DataSourceInformer
 }
 
 type version struct {
@@ -25,12 +29,22 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// DataLoadRequests returns a DataLoadRequestInformer.
-func (v *version) DataLoadRequests() DataLoadRequestInformer {
-	return &dataLoadRequestInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+// BaseModels returns a BaseModelInformer.
+func (v *version) BaseModels() BaseModelInformer {
+	return &baseModelInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// StorageBackends returns a StorageBackendInformer.
-func (v *version) StorageBackends() StorageBackendInformer {
-	return &storageBackendInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+// Checkpoints returns a CheckpointInformer.
+func (v *version) Checkpoints() CheckpointInformer {
+	return &checkpointInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// DataLoadRequests returns a DataLoadRequestInformer.
+func (v *version) DataLoadRequests() DataLoadRequestInformer {
+	return &dataLoadRequestInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// DataSources returns a DataSourceInformer.
+func (v *version) DataSources() DataSourceInformer {
+	return &dataSourceInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

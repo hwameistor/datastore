@@ -1,0 +1,14 @@
+apiVersion: datastore.io/v1alpha1
+kind: Checkpoint
+metadata:
+  name: test
+spec:
+  retain: 2
+  backup:
+    proto: minio 
+    minio:
+      endpoint: 10.6.113.100:30000
+      bucket: llm
+      prefix: checkpoints
+      secretKey: 4F2SQavrqQkxnOAT9rIv2MNG7sNLYZloX6WzwQ3B
+      accessKey: G9Wv1283nXUGUAxRjjiv

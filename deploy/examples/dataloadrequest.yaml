@@ -1,0 +1,6 @@
+apiVersion: datastore.io/v1alpha1
+kind: DataLoadRequest
+metadata:
+  name: test
+spec:
+  dataSource: test

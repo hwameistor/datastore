@@ -15,19 +15,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-type storageBackendManager struct {
+type dataSourceManager struct {
 	dsClientSet *datastoreclientset.Clientset
+
+	namespace string
 
 	globalView *GlobalViewFileSystem
 }
 
-func newstorageBackendManager() *storageBackendManager {
-	return &storageBackendManager{
+func newdataSourceManager(namespace string) *dataSourceManager {
+	return &dataSourceManager{
+		namespace:  namespace,
 		globalView: &GlobalViewFileSystem{},
 	}
 }
 
-func (mgr *storageBackendManager) Run(stopCh <-chan struct{}) {
+func (mgr *dataSourceManager) Run(stopCh <-chan struct{}) {
 
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -39,23 +42,23 @@ func (mgr *storageBackendManager) Run(stopCh <-chan struct{}) {
 	dsFactory := datastoreinformers.NewSharedInformerFactory(mgr.dsClientSet, 0)
 	dsFactory.Start(stopCh)
 
-	sbInformer := dsFactory.Datastore().V1alpha1().StorageBackends()
+	sbInformer := dsFactory.Datastore().V1alpha1().DataSources()
 	sbInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    mgr.onStorageBackendAdd,
-		UpdateFunc: mgr.onStorageBackendUpdate,
-		DeleteFunc: mgr.onStorageBackendDelete,
+		AddFunc:    mgr.onDataSourceAdd,
+		UpdateFunc: mgr.onDataSourceUpdate,
+		DeleteFunc: mgr.onDataSourceDelete,
 	})
 	go sbInformer.Informer().Run(stopCh)
 
 	go mgr.checkConnectionForever(stopCh)
 }
 
-func (mgr *storageBackendManager) checkConnectionForever(stopCh <-chan struct{}) {
-	log.Debug("Starting a worker to check storage backends for the connection regularly")
+func (mgr *dataSourceManager) checkConnectionForever(stopCh <-chan struct{}) {
+	log.Debug("Starting a worker to check storage dss for the connection regularly")
 	mgr.checkConnection()
 	for {
 		select {
-		case <-time.After(datastorev1alpha1.StorageBackendConnectionCheckInterval):
+		case <-time.After(datastorev1alpha1.DataSourceConnectionCheckInterval):
 			mgr.checkConnection()
 		case <-stopCh:
 			log.Debug("Exit the node status synchronizing")
@@ -64,29 +67,29 @@ func (mgr *storageBackendManager) checkConnectionForever(stopCh <-chan struct{})
 	}
 }
 
-func (mgr *storageBackendManager) checkConnection() {
-	log.Debug("Starting to check storage backends' connection")
+func (mgr *dataSourceManager) checkConnection() {
+	log.Debug("Starting to check storage dss' connection")
 
 	ctx := context.Background()
-	backendList, err := mgr.dsClientSet.DatastoreV1alpha1().StorageBackends().List(ctx, metav1.ListOptions{})
+	dsList, err := mgr.dsClientSet.DatastoreV1alpha1().DataSources(mgr.namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		log.WithError(err).Error("Failed to list the storage backends")
+		log.WithError(err).Error("Failed to list the storage dss")
 		return
 	}
-	for i := range backendList.Items {
-		backend := &backendList.Items[i]
-		if connected, err := mgr._checkConnection(backend); err != nil {
-			if backend.Status.Error != err.Error() {
-				backend.Status.Error = err.Error()
-				if _, err := mgr.dsClientSet.DatastoreV1alpha1().StorageBackends().UpdateStatus(ctx, backend, metav1.UpdateOptions{}); err != nil {
-					log.WithField("Message", backend.Status.Error).WithError(err).Error("ailed to update storage backend")
+	for i := range dsList.Items {
+		ds := &dsList.Items[i]
+		if connected, err := mgr._checkConnection(ds); err != nil {
+			if ds.Status.Error != err.Error() {
+				ds.Status.Error = err.Error()
+				if _, err := mgr.dsClientSet.DatastoreV1alpha1().DataSources(mgr.namespace).UpdateStatus(ctx, ds, metav1.UpdateOptions{}); err != nil {
+					log.WithField("Message", ds.Status.Error).WithError(err).Error("ailed to update storage ds")
 				}
 			}
 		} else {
-			if backend.Status.Connected != connected {
-				backend.Status.Connected = connected
-				if _, err := mgr.dsClientSet.DatastoreV1alpha1().StorageBackends().UpdateStatus(ctx, backend, metav1.UpdateOptions{}); err != nil {
-					log.WithField("Connected", backend.Status.Connected).WithError(err).Error("Failed to update status of storage backend")
+			if ds.Status.Connected != connected {
+				ds.Status.Connected = connected
+				if _, err := mgr.dsClientSet.DatastoreV1alpha1().DataSources(mgr.namespace).UpdateStatus(ctx, ds, metav1.UpdateOptions{}); err != nil {
+					log.WithField("Connected", ds.Status.Connected).WithError(err).Error("Failed to update status of storage ds")
 				}
 			}
 		}
@@ -95,53 +98,53 @@ func (mgr *storageBackendManager) checkConnection() {
 
 }
 
-func (mgr *storageBackendManager) _checkConnection(backend *datastorev1alpha1.StorageBackend) (bool, error) {
-	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeMinIO {
-		return mgr._checkConnectionForMinIO(backend)
+func (mgr *dataSourceManager) _checkConnection(ds *datastorev1alpha1.DataSource) (bool, error) {
+	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeMinIO {
+		return mgr._checkConnectionForMinIO(ds)
 	}
-	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeNFS {
-		return mgr._checkConnectionForNFS(backend)
+	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeNFS {
+		return mgr._checkConnectionForNFS(ds)
 	}
 
-	return false, fmt.Errorf("unknown storage backend")
+	return false, fmt.Errorf("unknown storage ds")
 }
 
-func (mgr *storageBackendManager) onStorageBackendAdd(obj interface{}) {
-	backend, _ := obj.(*datastorev1alpha1.StorageBackend)
-	mgr.handleStorageBackend(backend, true)
+func (mgr *dataSourceManager) onDataSourceAdd(obj interface{}) {
+	ds, _ := obj.(*datastorev1alpha1.DataSource)
+	mgr.handleDataSource(ds, true)
 }
 
-func (mgr *storageBackendManager) onStorageBackendUpdate(oldObj, newObj interface{}) {
-	backend, _ := newObj.(*datastorev1alpha1.StorageBackend)
-	mgr.handleStorageBackend(backend, false)
+func (mgr *dataSourceManager) onDataSourceUpdate(oldObj, newObj interface{}) {
+	ds, _ := newObj.(*datastorev1alpha1.DataSource)
+	mgr.handleDataSource(ds, false)
 }
 
-func (mgr *storageBackendManager) onStorageBackendDelete(obj interface{}) {
-	backend, _ := obj.(*datastorev1alpha1.StorageBackend)
-	mgr.removeStorageBackend(backend)
+func (mgr *dataSourceManager) onDataSourceDelete(obj interface{}) {
+	ds, _ := obj.(*datastorev1alpha1.DataSource)
+	mgr.removeDataSource(ds)
 }
 
-func (mgr *storageBackendManager) handleStorageBackend(backend *datastorev1alpha1.StorageBackend, forceRefresh bool) {
-	mgr.globalView.UpdateDataServer(backend)
+func (mgr *dataSourceManager) handleDataSource(ds *datastorev1alpha1.DataSource, forceRefresh bool) {
+	mgr.globalView.UpdateDataServer(ds)
 
-	if !forceRefresh && !backend.Spec.Refresh {
+	if !forceRefresh && !ds.Spec.Refresh {
 		return
 	}
 
 	var err error
-	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeMinIO {
-		err = mgr.handleStorageBackendForMinIO(backend)
-	} else if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeNFS {
-		err = mgr.handleStorageBackendForNFS(backend)
+	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeMinIO {
+		err = mgr.handleDataSourceForMinIO(ds)
+	} else if ds.Spec.Type == datastorev1alpha1.DataSourceTypeNFS {
+		err = mgr.handleDataSourceForNFS(ds)
 	} else {
-		err = mgr.handleStorageBackendForUnknown(backend)
+		err = mgr.handleDataSourceForUnknown(ds)
 	}
 
 	ctx := context.Background()
-	backend.Spec.Refresh = false
-	newBackend, e := mgr.dsClientSet.DatastoreV1alpha1().StorageBackends().Update(ctx, backend, metav1.UpdateOptions{})
+	ds.Spec.Refresh = false
+	newBackend, e := mgr.dsClientSet.DatastoreV1alpha1().DataSources(mgr.namespace).Update(ctx, ds, metav1.UpdateOptions{})
 	if e != nil {
-		log.WithField("Message", backend.Status.Error).WithError(e).Error("Failed to update storage backend")
+		log.WithField("Message", ds.Status.Error).WithError(e).Error("Failed to update storage ds")
 	}
 	newBackend.Status.LastRefreshTimestamp = &metav1.Time{Time: time.Now()}
 	newBackend.Status.RefreshCount++
@@ -151,22 +154,22 @@ func (mgr *storageBackendManager) handleStorageBackend(backend *datastorev1alpha
 	} else {
 		newBackend.Status.Error = err.Error()
 	}
-	if _, err = mgr.dsClientSet.DatastoreV1alpha1().StorageBackends().UpdateStatus(ctx, newBackend, metav1.UpdateOptions{}); err != nil {
-		log.WithField("Message", newBackend.Status.Error).WithError(err).Error("Failed to update status of storage backend")
+	if _, err = mgr.dsClientSet.DatastoreV1alpha1().DataSources(mgr.namespace).UpdateStatus(ctx, newBackend, metav1.UpdateOptions{}); err != nil {
+		log.WithField("Message", newBackend.Status.Error).WithError(err).Error("Failed to update status of storage ds")
 	}
 
 	dumpGlobalView(mgr.globalView)
 }
 
-func (mgr *storageBackendManager) handleStorageBackendForUnknown(backend *datastorev1alpha1.StorageBackend) error {
-	log.WithFields(log.Fields{"backend": backend.Name}).Debug("Handling a unknown storage backend")
+func (mgr *dataSourceManager) handleDataSourceForUnknown(ds *datastorev1alpha1.DataSource) error {
+	log.WithFields(log.Fields{"ds": ds.Name}).Debug("Handling a unknown storage ds")
 
-	return fmt.Errorf("unknown storage backend")
+	return fmt.Errorf("unknown storage ds")
 
 }
 
-func (mgr *storageBackendManager) removeStorageBackend(backend *datastorev1alpha1.StorageBackend) {
-	mgr.globalView.RemoveDataServer(backend)
+func (mgr *dataSourceManager) removeDataSource(ds *datastorev1alpha1.DataSource) {
+	mgr.globalView.RemoveDataServer(ds)
 
 	dumpGlobalView(mgr.globalView)
 }

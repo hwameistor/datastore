@@ -13,8 +13,8 @@ import (
 type DataLoadRequestLister interface {
 	// List lists all DataLoadRequests in the indexer.
 	List(selector labels.Selector) (ret []*v1alpha1.DataLoadRequest, err error)
-	// Get retrieves the DataLoadRequest from the index for a given name.
-	Get(name string) (*v1alpha1.DataLoadRequest, error)
+	// DataLoadRequests returns an object that can list and get DataLoadRequests.
+	DataLoadRequests(namespace string) DataLoadRequestNamespaceLister
 	DataLoadRequestListerExpansion
 }
 
@@ -36,9 +36,38 @@ func (s *dataLoadRequestLister) List(selector labels.Selector) (ret []*v1alpha1.
 	return ret, err
 }
 
-// Get retrieves the DataLoadRequest from the index for a given name.
-func (s *dataLoadRequestLister) Get(name string) (*v1alpha1.DataLoadRequest, error) {
-	obj, exists, err := s.indexer.GetByKey(name)
+// DataLoadRequests returns an object that can list and get DataLoadRequests.
+func (s *dataLoadRequestLister) DataLoadRequests(namespace string) DataLoadRequestNamespaceLister {
+	return dataLoadRequestNamespaceLister{indexer: s.indexer, namespace: namespace}
+}
+
+// DataLoadRequestNamespaceLister helps list and get DataLoadRequests.
+type DataLoadRequestNamespaceLister interface {
+	// List lists all DataLoadRequests in the indexer for a given namespace.
+	List(selector labels.Selector) (ret []*v1alpha1.DataLoadRequest, err error)
+	// Get retrieves the DataLoadRequest from the indexer for a given namespace and name.
+	Get(name string) (*v1alpha1.DataLoadRequest, error)
+	DataLoadRequestNamespaceListerExpansion
+}
+
+// dataLoadRequestNamespaceLister implements the DataLoadRequestNamespaceLister
+// interface.
+type dataLoadRequestNamespaceLister struct {
+	indexer   cache.Indexer
+	namespace string
+}
+
+// List lists all DataLoadRequests in the indexer for a given namespace.
+func (s dataLoadRequestNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.DataLoadRequest, err error) {
+	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*v1alpha1.DataLoadRequest))
+	})
+	return ret, err
+}
+
+// Get retrieves the DataLoadRequest from the indexer for a given namespace and name.
+func (s dataLoadRequestNamespaceLister) Get(name string) (*v1alpha1.DataLoadRequest, error) {
+	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
 	if err != nil {
 		return nil, err
 	}
