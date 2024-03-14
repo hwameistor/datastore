@@ -1,0 +1,8 @@
+FROM alpine:latest
+
+RUN wget https://github.com/juicedata/juicesync/releases/download/v1.1.1/juicesync-1.1.1-linux-arm64.tar.gz
+RUN tar zxf juicesync-1.1.1-linux-arm64.tar.gz && mv juicesync /usr/bin && chmod +x /usr/bin/juicesync
+
+COPY ./_build/datamanager /
+
+ENTRYPOINT [ "/datamanager" ]
