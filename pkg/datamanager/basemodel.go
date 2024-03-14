@@ -7,6 +7,10 @@ import (
 	"strings"
 
 	datastorev1alpha1 "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
+	"github.com/hwameistor/datastore/pkg/storage/ftp"
+	"github.com/hwameistor/datastore/pkg/storage/minio"
+	"github.com/hwameistor/datastore/pkg/storage/nfs"
+	"github.com/hwameistor/datastore/pkg/storage/web"
 	"github.com/hwameistor/datastore/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -65,16 +69,16 @@ func (mgr *BaseModelManager) Cook() error {
 
 	log.WithField("file", mgr.conf.ModelFileName).Debug("Loading base model ...")
 	if mgr.conf.Proto == "http" && mgr.conf.HTTP != nil {
-		return utils.DownloadFileByHttp(mgr.conf.HTTP, mgr.conf.ModelFileName, fpath)
+		return web.DownloadObject(mgr.conf.HTTP, mgr.conf.ModelFileName, fpath)
 	}
 	if mgr.conf.Proto == "minio" && mgr.conf.MinIO != nil {
-		return utils.DownloadFileByMinIO(mgr.conf.MinIO, mgr.conf.ModelFileName, fpath)
+		return minio.DownloadObject(mgr.conf.MinIO, mgr.conf.ModelFileName, fpath)
 	}
 	if mgr.conf.Proto == "nfs" && mgr.conf.NFS != nil {
-		return utils.DownloadFileByNFS(mgr.conf.NFS, mgr.conf.ModelFileName, fpath)
+		return nfs.DownloadObject(mgr.conf.NFS, mgr.conf.ModelFileName, fpath)
 	}
 	if mgr.conf.Proto == "ftp" && mgr.conf.FTP != nil {
-		return utils.DownloadFileByFTP(mgr.conf.FTP, mgr.conf.ModelFileName, fpath)
+		return ftp.DownloadObject(mgr.conf.FTP, mgr.conf.ModelFileName, fpath)
 	}
 
 	return fmt.Errorf("unsupported url")

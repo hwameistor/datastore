@@ -3,4 +3,6 @@ kind: DataLoadRequest
 metadata:
   name: test
 spec:
+  isGlobal: true
   dataSource: test
+  subDir: examples

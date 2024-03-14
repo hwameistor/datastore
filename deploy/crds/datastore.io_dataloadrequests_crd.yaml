@@ -20,32 +20,9 @@ spec:
     - jsonPath: .spec.subDir
       name: SubDir
       type: string
-    - jsonPath: .spec.retry
-      name: Retry
-      type: boolean
-    - jsonPath: .spec.retryInterval
-      name: RetryInterval
-      priority: 1
-      type: integer
-    - jsonPath: .status.phase
-      name: Phase
-      type: string
-    - jsonPath: .status.retryCount
-      name: RetryCount
-      priority: 1
-      type: integer
-    - jsonPath: .status.loadingStartTime
-      name: LoadingStartTime
-      type: date
-    - jsonPath: .status.loadingCompleteTime
-      name: LoadingCompleteTime
-      type: date
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
-    - jsonPath: .status.error
-      name: Error
-      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -70,52 +47,29 @@ spec:
                 description: name of the data source
                 type: string
               isGlobal:
+                default: true
                 description: indicate if the request is for all or not
                 type: boolean
               node:
                 description: name of the node who will loads the data, and it works
                   only when isglobal is false
                 type: string
-              retry:
-                default: false
-                type: boolean
-              retryInterval:
-                default: 1
-                format: int64
-                type: integer
               subDir:
                 type: string
             required:
             - dataSource
             - isGlobal
-            - node
-            - retry
-            - retryInterval
             type: object
           status:
             description: DataLoadRequestStatus defines the observed state of DataLoadRequest
             properties:
-              error:
-                type: string
-              loadingCompleteTime:
-                format: date-time
-                type: string
-              loadingStartTime:
-                format: date-time
-                type: string
-              phase:
-                enum:
-                - Preparing
-                - Loading
-                - Completed
-                - Failed
-                type: string
-              retryCount:
-                default: 0
-                format: int64
-                type: integer
+              readyNodes:
+                description: when a node finishes the data loading, record it here
+                items:
+                  type: string
+                type: array
             required:
-            - retryCount
+            - readyNodes
             type: object
         type: object
     served: true

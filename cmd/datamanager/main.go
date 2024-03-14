@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"sync"
 
 	"github.com/hwameistor/datastore/pkg/datamanager"
 
@@ -83,27 +84,43 @@ func main() {
 }
 
 func runAsInitRole() {
-	if err := datamanager.NewBaseModelManager(compileParametersForBaseModel()).Cook(); err != nil {
-		log.WithError(err).Fatal("Base model is not ready")
-	} else {
-		log.Debug("Base model is ready")
-	}
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		if err := datamanager.NewBaseModelManager(compileParametersForBaseModel()).Cook(); err != nil {
+			log.WithError(err).Fatal("Base model is not ready")
+		} else {
+			log.Debug("Base model is ready")
+		}
+		wg.Done()
+	}()
 
 	if *isMaster {
-		log.Debug("I am the master")
-		if err := datamanager.NewCheckpointManager(compileParametersForCheckpoint()).Cook(); err != nil {
-			log.WithError(err).Fatal("Checkpoint is not ready")
-		} else {
-			log.Debug("Checkpoint is ready")
-		}
+		wg.Add(1)
+		go func() {
+			log.Debug("I am the master")
+			if err := datamanager.NewCheckpointManager(compileParametersForCheckpoint()).Cook(); err != nil {
+				log.WithError(err).Fatal("Checkpoint is not ready")
+			} else {
+				log.Debug("Checkpoint is ready")
+			}
+			wg.Done()
+		}()
 	} else {
-		log.Debug("I am a worker")
-		if err := datamanager.NewTrainingDataManager(compileParametersForTrainingData()).Cook(); err != nil {
-			log.WithError(err).Fatal("Training data is not ready")
-		} else {
-			log.Debug("Training data is ready")
-		}
+		wg.Add(1)
+		go func() {
+			log.Debug("I am a worker")
+			if err := datamanager.NewTrainingDataManager(compileParametersForTrainingData()).Cook(); err != nil {
+				log.WithError(err).Fatal("Training data is not ready")
+			} else {
+				log.Debug("Training data is ready")
+			}
+			wg.Done()
+		}()
 	}
+
+	wg.Wait()
 
 }
 

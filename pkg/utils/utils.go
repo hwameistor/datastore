@@ -3,7 +3,6 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"os"
 
@@ -12,12 +11,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	datastoreclientsetv1alpha1 "github.com/hwameistor/datastore/pkg/apis/client/clientset/versioned/typed/datastore/v1alpha1"
-	datastorev1alpha1 "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
-	"github.com/hwameistor/datastore/pkg/storage/ftp"
-	"github.com/hwameistor/datastore/pkg/storage/minio"
-	"github.com/hwameistor/datastore/pkg/storage/nfs"
-	"github.com/hwameistor/datastore/pkg/storage/ssh"
-	"github.com/hwameistor/datastore/pkg/storage/web"
 )
 
 func BuildInClusterDataStoreClientset() *datastoreclientsetv1alpha1.DatastoreV1alpha1Client {
@@ -35,42 +28,6 @@ func BuildInClusterClientset() *kubernetes.Clientset {
 		log.WithError(err).Fatal("Failed to build kubernetes config")
 	}
 	return kubernetes.NewForConfigOrDie(config)
-}
-
-func DownloadFileByMinIO(spec *datastorev1alpha1.MinIOSpec, objName string, localFilePath string) error {
-	minioClient, err := minio.NewClient(spec)
-	if err != nil {
-		log.WithField("endpoint", spec.Endpoint).WithError(err).Error("Failed to setup the minio client")
-		return err
-	}
-	return minio.DownloadObject(minioClient, spec.Bucket, fmt.Sprintf("%s/%s", spec.Prefix, objName), localFilePath)
-
-}
-
-func UploadFileByMinIO(spec *datastorev1alpha1.MinIOSpec, objName string, localFilePath string) error {
-	minioClient, err := minio.NewClient(spec)
-	if err != nil {
-		log.WithField("endpoint", spec.Endpoint).WithError(err).Error("Failed to setup the minio client")
-		return err
-	}
-	return minio.UploadObject(minioClient, spec.Bucket, fmt.Sprintf("%s/%s", spec.Prefix, objName), localFilePath)
-}
-
-func DownloadFileByHttp(spec *datastorev1alpha1.HTTPSpec, fName string, localFilePath string) error {
-	return web.DownloadObject(spec, fName, localFilePath)
-}
-
-func DownloadFileByNFS(spec *datastorev1alpha1.NFSSpec, fName string, localFilePath string) error {
-	return nfs.DownloadObject(spec, fName, localFilePath)
-
-}
-
-func DownloadFileByFTP(spec *datastorev1alpha1.FTPSpec, fName string, localFilePath string) error {
-	return ftp.DownloadObject(spec, fName, localFilePath)
-}
-
-func DownloadFileBySSH(node string, remoteFilePath string, localFilePath string) error {
-	return ssh.DownloadObject(node, remoteFilePath, localFilePath)
 }
 
 func Checksum(fpath string) (string, error) {
@@ -96,4 +53,13 @@ func Mkdir(dirpath string) error {
 		return os.MkdirAll(dirpath, os.ModePerm)
 	}
 	return nil
+}
+
+func IsStringInSet(str string, strArray []string) bool {
+	for _, s := range strArray {
+		if str == s {
+			return true
+		}
+	}
+	return false
 }

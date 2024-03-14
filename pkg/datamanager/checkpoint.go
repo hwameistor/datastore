@@ -8,6 +8,8 @@ import (
 
 	datastoreclientsetv1alpha1 "github.com/hwameistor/datastore/pkg/apis/client/clientset/versioned/typed/datastore/v1alpha1"
 	datastorev1alpha1 "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
+	"github.com/hwameistor/datastore/pkg/storage/minio"
+	"github.com/hwameistor/datastore/pkg/storage/ssh"
 	"github.com/hwameistor/datastore/pkg/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -118,7 +120,7 @@ func (mgr *CheckpointManager) restoreFromPeer(ckpt *datastorev1alpha1.Checkpoint
 	fileLocalPath := fmt.Sprintf("%s/%s", mgr.params.LocalPathDir, ckpt.Name)
 	fileRemotePath := fmt.Sprintf("%s/%s", ckpt.DirOnHost, ckpt.Name)
 
-	return utils.DownloadFileBySSH(ckpt.NodeName, fileRemotePath, fileLocalPath)
+	return ssh.DownloadObject(ckpt.NodeName, fileRemotePath, fileLocalPath)
 }
 
 func (mgr *CheckpointManager) restoreFromBackup(ckpt *datastorev1alpha1.CheckpointRecord) error {
@@ -133,7 +135,7 @@ func (mgr *CheckpointManager) restoreFromBackup(ckpt *datastorev1alpha1.Checkpoi
 		return fmt.Errorf("no backup found")
 	}
 	if mgr.config.Backup.Proto == "minio" && mgr.config.Backup.MinIO != nil {
-		return utils.DownloadFileByMinIO(mgr.config.Backup.MinIO, ckpt.Name, fmt.Sprintf("%s/%s", mgr.params.LocalPathDir, ckpt.Name))
+		return minio.DownloadObject(mgr.config.Backup.MinIO, ckpt.Name, fmt.Sprintf("%s/%s", mgr.params.LocalPathDir, ckpt.Name))
 	}
 	log.WithField("config", mgr.config.Backup).Error("Invalid backup configration")
 	return fmt.Errorf("invalid backup config")
@@ -227,7 +229,7 @@ func (mgr *CheckpointManager) backupCheckpoint(fpath string, fname string) error
 	log.WithField("checkpoint", fpath).Debug("Start to backup the checkpoint ...")
 
 	if mgr.config.Backup.Proto == "minio" && mgr.config.Backup.MinIO != nil {
-		return utils.UploadFileByMinIO(mgr.config.Backup.MinIO, fname, fpath)
+		return minio.UploadObject(mgr.config.Backup.MinIO, fname, fpath)
 	}
 	log.WithField("config", mgr.config.Backup).Error("Invalid backup configration")
 	return fmt.Errorf("invalid backup config")

@@ -67,7 +67,7 @@ DATAMANAGER_MODULE_NAME = datamanager
 DATAMANAGER_BUILD_INPUT = ${CMDS_DIR}/${DATAMANAGER_MODULE_NAME}/main.go
 .PHONY: run_datamanager
 run_datamanager:
-	go run ${BUILD_OPTIONS} ${DATAMANAGER_BUILD_INPUT} --isTrainMaster=true --isInitRole=true --baseModelLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/models --checkpointLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/checkpoints --checkpointLocalDirOnHost=/Users/liangsun/Downloads/checkpoints
+	go run ${BUILD_OPTIONS} ${DATAMANAGER_BUILD_INPUT} --isTrainMaster=false --isInitRole=true --baseModelLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/models --checkpointLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/checkpoints --checkpointLocalDirOnHost=/Users/liangsun/Downloads/checkpoints --trainingdataLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/training --trainingdataLocalDirOnHost=/Users/liangsun/Downloads/training
 
 .PHONY: compile_datamanager
 compile_datamanager:
