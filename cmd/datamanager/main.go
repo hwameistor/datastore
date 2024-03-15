@@ -127,7 +127,7 @@ func runAsInitRole() {
 func runAsManagerRole() {
 	stopCh := make(chan struct{})
 
-	go datamanager.NewBaseModelManager(compileParametersForBaseModel()).Run(stopCh)
+	//	go datamanager.NewBaseModelManager(compileParametersForBaseModel()).Run(stopCh)
 	if *isMaster {
 		go datamanager.NewCheckpointManager(compileParametersForCheckpoint()).Run(stopCh)
 	} else {

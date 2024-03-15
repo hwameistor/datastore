@@ -55,6 +55,11 @@ func (mgr *TrainingDataManager) Cook() error {
 		return err
 	}
 
+	if !dlr.Spec.IsGlobal && dlr.Spec.Node != mgr.params.NodeName {
+		log.WithFields(log.Fields{"config": mgr.params.ConfigName, "spec": dlr.Spec}).Debug("The config is not for me")
+		return fmt.Errorf("no valid config")
+	}
+
 	isLoadedBefore := utils.IsStringInSet(mgr.params.NodeName, dlr.Status.ReadyNodes)
 
 	if len(files) > 0 && isLoadedBefore {
