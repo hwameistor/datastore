@@ -26,32 +26,33 @@ type DataLoadRequestInformer interface {
 type dataLoadRequestInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
+	namespace        string
 }
 
 // NewDataLoadRequestInformer constructs a new informer for DataLoadRequest type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewDataLoadRequestInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredDataLoadRequestInformer(client, resyncPeriod, indexers, nil)
+func NewDataLoadRequestInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredDataLoadRequestInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
 // NewFilteredDataLoadRequestInformer constructs a new informer for DataLoadRequest type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredDataLoadRequestInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredDataLoadRequestInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DatastoreV1alpha1().DataLoadRequests().List(context.TODO(), options)
+				return client.DatastoreV1alpha1().DataLoadRequests(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DatastoreV1alpha1().DataLoadRequests().Watch(context.TODO(), options)
+				return client.DatastoreV1alpha1().DataLoadRequests(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&datastorev1alpha1.DataLoadRequest{},
@@ -61,7 +62,7 @@ func NewFilteredDataLoadRequestInformer(client versioned.Interface, resyncPeriod
 }
 
 func (f *dataLoadRequestInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredDataLoadRequestInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewFilteredDataLoadRequestInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
 func (f *dataLoadRequestInformer) Informer() cache.SharedIndexInformer {

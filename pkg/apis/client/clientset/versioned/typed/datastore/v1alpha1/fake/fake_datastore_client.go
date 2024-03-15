@@ -12,12 +12,20 @@ type FakeDatastoreV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeDatastoreV1alpha1) DataLoadRequests() v1alpha1.DataLoadRequestInterface {
-	return &FakeDataLoadRequests{c}
+func (c *FakeDatastoreV1alpha1) BaseModels(namespace string) v1alpha1.BaseModelInterface {
+	return &FakeBaseModels{c, namespace}
 }
 
-func (c *FakeDatastoreV1alpha1) StorageBackends() v1alpha1.StorageBackendInterface {
-	return &FakeStorageBackends{c}
+func (c *FakeDatastoreV1alpha1) Checkpoints(namespace string) v1alpha1.CheckpointInterface {
+	return &FakeCheckpoints{c, namespace}
+}
+
+func (c *FakeDatastoreV1alpha1) DataLoadRequests(namespace string) v1alpha1.DataLoadRequestInterface {
+	return &FakeDataLoadRequests{c, namespace}
+}
+
+func (c *FakeDatastoreV1alpha1) DataSources(namespace string) v1alpha1.DataSourceInterface {
+	return &FakeDataSources{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

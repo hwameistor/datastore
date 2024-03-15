@@ -79,7 +79,7 @@ func LoadObjectMetadata(spec *datastorev1alpha1.NFSSpec) ([]*datastoreapis.DataO
 	return files, nil
 }
 
-func LoadObjectToLocal(spec *datastorev1alpha1.NFSSpec, localRootDir string) error {
+func DownloadObject(spec *datastorev1alpha1.NFSSpec, filePath string, localFilePath string) error {
 
 	mount, err := nfs.DialMount(spec.Endpoint, time.Second)
 	if err != nil {
@@ -94,41 +94,22 @@ func LoadObjectToLocal(spec *datastorev1alpha1.NFSSpec, localRootDir string) err
 	}
 	defer target.Close()
 
-	dirs := []string{spec.RootDir}
-	for len(dirs) > 0 {
-		subdirs := []string{}
-		for _, dirpath := range dirs {
-			objs, err := target.ReadDirPlus(dirpath)
-			if err != nil {
-				return err
-			}
-			for _, obj := range objs {
-				path := strings.TrimPrefix(fmt.Sprintf("%s/%s", dirpath, obj.FileName), "./")
-				if obj.IsDir() {
-					//fmt.Printf("Directory:  name: %s, size: %d\n", path, obj.Size())
-					subdirs = append(subdirs, path)
-				} else {
-					localDirPath := localRootDir + "/" + dirpath
-					if _, err = target.Mkdir(localDirPath, 0775); err != nil {
-						return fmt.Errorf("failed to create a local directory %s with error : %s", localDirPath, err.Error())
-					}
-					localFilePath := localDirPath + "/" + obj.FileName
-					lf, err := os.Open(localFilePath)
-					if err != nil {
-						return fmt.Errorf("failed to create a local file %s with error : %s", localFilePath, err.Error())
-					}
-					rf, err := target.OpenFile(path, 0777)
-					if err != nil {
-						return fmt.Errorf("failed to open a nfs file %s with error : %s", path, err.Error())
-					}
-					n, err := io.CopyN(rf, lf, obj.Size())
-					if err != nil {
-						return fmt.Errorf("failed to load data into local file %s (n=%d) with error : %s", localFilePath, n, err.Error())
-					}
-				}
-			}
-		}
-		dirs = subdirs
+	items := strings.Split(localFilePath, "/")
+	localFileDir := strings.TrimRight(localFilePath, items[len(items)-1])
+	if _, err = target.Mkdir(localFileDir, 0775); err != nil {
+		return fmt.Errorf("failed to create a local directory %s with error : %s", localFileDir, err.Error())
+	}
+	lf, err := os.Open(localFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create a local file %s with error : %s", localFilePath, err.Error())
+	}
+	rf, err := target.OpenFile(filePath, 0777)
+	if err != nil {
+		return fmt.Errorf("failed to open a nfs file %s with error : %s", filePath, err.Error())
+	}
+	n, err := io.Copy(rf, lf)
+	if err != nil {
+		return fmt.Errorf("failed to load data into local file %s (n=%d) with error : %s", localFilePath, n, err.Error())
 	}
 
 	mount.Unmount()

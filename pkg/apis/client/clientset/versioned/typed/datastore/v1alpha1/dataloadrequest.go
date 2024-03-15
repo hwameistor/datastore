@@ -17,7 +17,7 @@ import (
 // DataLoadRequestsGetter has a method to return a DataLoadRequestInterface.
 // A group's client should implement this interface.
 type DataLoadRequestsGetter interface {
-	DataLoadRequests() DataLoadRequestInterface
+	DataLoadRequests(namespace string) DataLoadRequestInterface
 }
 
 // DataLoadRequestInterface has methods to work with DataLoadRequest resources.
@@ -37,12 +37,14 @@ type DataLoadRequestInterface interface {
 // dataLoadRequests implements DataLoadRequestInterface
 type dataLoadRequests struct {
 	client rest.Interface
+	ns     string
 }
 
 // newDataLoadRequests returns a DataLoadRequests
-func newDataLoadRequests(c *DatastoreV1alpha1Client) *dataLoadRequests {
+func newDataLoadRequests(c *DatastoreV1alpha1Client, namespace string) *dataLoadRequests {
 	return &dataLoadRequests{
 		client: c.RESTClient(),
+		ns:     namespace,
 	}
 }
 
@@ -50,6 +52,7 @@ func newDataLoadRequests(c *DatastoreV1alpha1Client) *dataLoadRequests {
 func (c *dataLoadRequests) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.DataLoadRequest, err error) {
 	result = &v1alpha1.DataLoadRequest{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("dataloadrequests").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
@@ -66,6 +69,7 @@ func (c *dataLoadRequests) List(ctx context.Context, opts v1.ListOptions) (resul
 	}
 	result = &v1alpha1.DataLoadRequestList{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("dataloadrequests").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -82,6 +86,7 @@ func (c *dataLoadRequests) Watch(ctx context.Context, opts v1.ListOptions) (watc
 	}
 	opts.Watch = true
 	return c.client.Get().
+		Namespace(c.ns).
 		Resource("dataloadrequests").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -92,6 +97,7 @@ func (c *dataLoadRequests) Watch(ctx context.Context, opts v1.ListOptions) (watc
 func (c *dataLoadRequests) Create(ctx context.Context, dataLoadRequest *v1alpha1.DataLoadRequest, opts v1.CreateOptions) (result *v1alpha1.DataLoadRequest, err error) {
 	result = &v1alpha1.DataLoadRequest{}
 	err = c.client.Post().
+		Namespace(c.ns).
 		Resource("dataloadrequests").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(dataLoadRequest).
@@ -104,6 +110,7 @@ func (c *dataLoadRequests) Create(ctx context.Context, dataLoadRequest *v1alpha1
 func (c *dataLoadRequests) Update(ctx context.Context, dataLoadRequest *v1alpha1.DataLoadRequest, opts v1.UpdateOptions) (result *v1alpha1.DataLoadRequest, err error) {
 	result = &v1alpha1.DataLoadRequest{}
 	err = c.client.Put().
+		Namespace(c.ns).
 		Resource("dataloadrequests").
 		Name(dataLoadRequest.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -118,6 +125,7 @@ func (c *dataLoadRequests) Update(ctx context.Context, dataLoadRequest *v1alpha1
 func (c *dataLoadRequests) UpdateStatus(ctx context.Context, dataLoadRequest *v1alpha1.DataLoadRequest, opts v1.UpdateOptions) (result *v1alpha1.DataLoadRequest, err error) {
 	result = &v1alpha1.DataLoadRequest{}
 	err = c.client.Put().
+		Namespace(c.ns).
 		Resource("dataloadrequests").
 		Name(dataLoadRequest.Name).
 		SubResource("status").
@@ -131,6 +139,7 @@ func (c *dataLoadRequests) UpdateStatus(ctx context.Context, dataLoadRequest *v1
 // Delete takes name of the dataLoadRequest and deletes it. Returns an error if one occurs.
 func (c *dataLoadRequests) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("dataloadrequests").
 		Name(name).
 		Body(&opts).
@@ -145,6 +154,7 @@ func (c *dataLoadRequests) DeleteCollection(ctx context.Context, opts v1.DeleteO
 		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
+		Namespace(c.ns).
 		Resource("dataloadrequests").
 		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -157,6 +167,7 @@ func (c *dataLoadRequests) DeleteCollection(ctx context.Context, opts v1.DeleteO
 func (c *dataLoadRequests) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.DataLoadRequest, err error) {
 	result = &v1alpha1.DataLoadRequest{}
 	err = c.client.Patch(pt).
+		Namespace(c.ns).
 		Resource("dataloadrequests").
 		Name(name).
 		SubResource(subresources...).

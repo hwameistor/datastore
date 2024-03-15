@@ -10,20 +10,20 @@ type MetadataController interface {
 }
 
 type controller struct {
-	backendManager *storageBackendManager
+	dsMgr *dataSourceManager
 }
 
 // New an assistant instance
-func NewMetadataController() MetadataController {
+func NewMetadataController(namespace string) MetadataController {
 	return &controller{
-		backendManager: newstorageBackendManager(),
+		dsMgr: newdataSourceManager(namespace),
 	}
 }
 
 func (ctrl *controller) Run(stopCh <-chan struct{}) error {
 	log.Debug("Start metadata controller ...")
 
-	ctrl.backendManager.Run(stopCh)
+	ctrl.dsMgr.Run(stopCh)
 
 	return nil
 }

@@ -26,20 +26,28 @@ require (
 )
 
 require (
+	github.com/jlaffaye/ftp v0.2.0
 	github.com/minio/minio-go/v7 v7.0.66
+	github.com/pytool/ssh v0.0.0-20190312091242-5aaea5918db7
+	github.com/radovskyb/watcher v1.0.7
 	github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00
 )
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.5.0 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
+	github.com/kr/fs v0.1.0 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/onsi/gomega v1.19.0 // indirect
+	github.com/pkg/sftp v1.10.1 // indirect
 	github.com/prometheus/client_golang v1.13.1 // indirect
 	github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 // indirect
 	github.com/rs/xid v1.5.0 // indirect

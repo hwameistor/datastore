@@ -1,0 +1,12 @@
+apiVersion: datastore.io/v1alpha1
+kind: DataSource
+metadata:
+  name: test
+spec:
+  refresh: true
+  type: minio
+  minio:
+    endpoint: 10.6.113.100:30000
+    bucket: llm
+    secretKey: 4F2SQavrqQkxnOAT9rIv2MNG7sNLYZloX6WzwQ3B
+    accessKey: G9Wv1283nXUGUAxRjjiv

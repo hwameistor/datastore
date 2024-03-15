@@ -16,101 +16,101 @@ type GlobalViewFileSystem struct {
 	lock sync.Mutex
 }
 
-func (gs *GlobalViewFileSystem) UpdateDataServer(backend *datastorev1alpha1.StorageBackend) {
-	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeMinIO {
-		gs._updateDataServerForMinIO(backend)
+func (gs *GlobalViewFileSystem) UpdateDataServer(ds *datastorev1alpha1.DataSource) {
+	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeMinIO {
+		gs._updateDataServerForMinIO(ds)
 	}
-	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeNFS {
-		gs._updateDataServerForNFS(backend)
+	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeNFS {
+		gs._updateDataServerForNFS(ds)
 	}
 }
 
-func (gs *GlobalViewFileSystem) _updateDataServerForMinIO(backend *datastorev1alpha1.StorageBackend) {
+func (gs *GlobalViewFileSystem) _updateDataServerForMinIO(ds *datastorev1alpha1.DataSource) {
 	if len(gs.Servers) == 0 {
 		return
 	}
-	if gs.Servers[backend.Name] == nil {
+	if gs.Servers[ds.Name] == nil {
 		return
 	}
 
 	gs.lock.Lock()
 
-	gs.Servers[backend.Name].Endpoint = backend.Spec.MinIO.Endpoint
-	gs.Servers[backend.Name].Connected = backend.Status.Connected
+	gs.Servers[ds.Name].Endpoint = ds.Spec.MinIO.Endpoint
+	gs.Servers[ds.Name].Connected = ds.Status.Connected
 
 	gs.lock.Unlock()
 }
 
-func (gs *GlobalViewFileSystem) _updateDataServerForNFS(backend *datastorev1alpha1.StorageBackend) {
+func (gs *GlobalViewFileSystem) _updateDataServerForNFS(ds *datastorev1alpha1.DataSource) {
 	if len(gs.Servers) == 0 {
 		return
 	}
-	if gs.Servers[backend.Name] == nil {
+	if gs.Servers[ds.Name] == nil {
 		return
 	}
 
 	gs.lock.Lock()
 
-	gs.Servers[backend.Name].Endpoint = backend.Spec.NFS.Endpoint
-	gs.Servers[backend.Name].Connected = backend.Status.Connected
+	gs.Servers[ds.Name].Endpoint = ds.Spec.NFS.Endpoint
+	gs.Servers[ds.Name].Connected = ds.Status.Connected
 
 	gs.lock.Unlock()
 }
 
-func (gs *GlobalViewFileSystem) RemoveDataServer(backend *datastorev1alpha1.StorageBackend) {
-	log.WithFields(log.Fields{"backend": backend.Name}).Debug("Removing a storage backend ...")
+func (gs *GlobalViewFileSystem) RemoveDataServer(ds *datastorev1alpha1.DataSource) {
+	log.WithFields(log.Fields{"ds": ds.Name}).Debug("Removing a storage ds ...")
 
 	if len(gs.Servers) == 0 {
 		return
 	}
-	if gs.Servers[backend.Name] == nil {
+	if gs.Servers[ds.Name] == nil {
 		return
 	}
 
 	gs.lock.Lock()
 
-	delete(gs.Servers, backend.Name)
+	delete(gs.Servers, ds.Name)
 
 	gs.lock.Unlock()
 }
 
-func (gs *GlobalViewFileSystem) resetDataServer(backend *datastorev1alpha1.StorageBackend) *datastoreapis.DataServer {
+func (gs *GlobalViewFileSystem) resetDataServer(ds *datastorev1alpha1.DataSource) *datastoreapis.DataServer {
 	gs.lock.Lock()
 	defer gs.lock.Unlock()
 
-	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeMinIO {
-		return gs._resetDataServerForMinIO(backend)
+	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeMinIO {
+		return gs._resetDataServerForMinIO(ds)
 	}
-	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeNFS {
-		return gs._resetDataServerForNFS(backend)
+	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeNFS {
+		return gs._resetDataServerForNFS(ds)
 	}
 
 	return nil
 }
 
-func (gs *GlobalViewFileSystem) _resetDataServerForMinIO(backend *datastorev1alpha1.StorageBackend) *datastoreapis.DataServer {
+func (gs *GlobalViewFileSystem) _resetDataServerForMinIO(ds *datastorev1alpha1.DataSource) *datastoreapis.DataServer {
 
 	if len(gs.Servers) == 0 {
 		gs.Servers = map[string]*datastoreapis.DataServer{}
 	}
-	if gs.Servers[backend.Name] == nil {
-		gs.Servers[backend.Name] = &datastoreapis.DataServer{
-			Type:      backend.Spec.Type,
-			Connected: backend.Status.Connected,
-			Endpoint:  backend.Spec.MinIO.Endpoint,
+	if gs.Servers[ds.Name] == nil {
+		gs.Servers[ds.Name] = &datastoreapis.DataServer{
+			Type:      ds.Spec.Type,
+			Connected: ds.Status.Connected,
+			Endpoint:  ds.Spec.MinIO.Endpoint,
 			SubDirs:   map[string]*datastoreapis.DataDirectory{},
 			AllDirs:   map[string]*datastoreapis.DataDirectory{},
 			AllObjs:   map[string]*datastoreapis.DataObject{},
 		}
 	} else {
-		gs.Servers[backend.Name].Endpoint = backend.Spec.MinIO.Endpoint
-		gs.Servers[backend.Name].Connected = backend.Status.Connected
-		gs.Servers[backend.Name].SubDirs = map[string]*datastoreapis.DataDirectory{}
-		gs.Servers[backend.Name].AllDirs = map[string]*datastoreapis.DataDirectory{}
-		gs.Servers[backend.Name].AllObjs = map[string]*datastoreapis.DataObject{}
+		gs.Servers[ds.Name].Endpoint = ds.Spec.MinIO.Endpoint
+		gs.Servers[ds.Name].Connected = ds.Status.Connected
+		gs.Servers[ds.Name].SubDirs = map[string]*datastoreapis.DataDirectory{}
+		gs.Servers[ds.Name].AllDirs = map[string]*datastoreapis.DataDirectory{}
+		gs.Servers[ds.Name].AllObjs = map[string]*datastoreapis.DataObject{}
 	}
 
-	minioInfo := backend.Spec.MinIO
+	minioInfo := ds.Spec.MinIO
 	bucket := datastoreapis.DataDirectory{
 		Name:    minioInfo.Bucket,
 		Prefix:  minioInfo.Prefix,
@@ -118,57 +118,57 @@ func (gs *GlobalViewFileSystem) _resetDataServerForMinIO(backend *datastorev1alp
 		SubDirs: map[string]*datastoreapis.DataDirectory{},
 		Objects: map[string]*datastoreapis.DataObject{},
 	}
-	gs.Servers[backend.Name].SubDirs[minioInfo.Bucket] = &bucket
+	gs.Servers[ds.Name].SubDirs[minioInfo.Bucket] = &bucket
 
-	return gs.Servers[backend.Name]
+	return gs.Servers[ds.Name]
 }
 
-func (gs *GlobalViewFileSystem) _resetDataServerForNFS(backend *datastorev1alpha1.StorageBackend) *datastoreapis.DataServer {
+func (gs *GlobalViewFileSystem) _resetDataServerForNFS(ds *datastorev1alpha1.DataSource) *datastoreapis.DataServer {
 
 	if len(gs.Servers) == 0 {
 		gs.Servers = map[string]*datastoreapis.DataServer{}
 	}
-	if gs.Servers[backend.Name] == nil {
-		gs.Servers[backend.Name] = &datastoreapis.DataServer{
-			Type:      backend.Spec.Type,
-			Connected: backend.Status.Connected,
-			Endpoint:  backend.Spec.NFS.Endpoint,
+	if gs.Servers[ds.Name] == nil {
+		gs.Servers[ds.Name] = &datastoreapis.DataServer{
+			Type:      ds.Spec.Type,
+			Connected: ds.Status.Connected,
+			Endpoint:  ds.Spec.NFS.Endpoint,
 			SubDirs:   map[string]*datastoreapis.DataDirectory{},
 			AllDirs:   map[string]*datastoreapis.DataDirectory{},
 			AllObjs:   map[string]*datastoreapis.DataObject{},
 		}
 	} else {
-		gs.Servers[backend.Name].Endpoint = backend.Spec.NFS.Endpoint
-		gs.Servers[backend.Name].Connected = backend.Status.Connected
-		gs.Servers[backend.Name].SubDirs = map[string]*datastoreapis.DataDirectory{}
-		gs.Servers[backend.Name].AllDirs = map[string]*datastoreapis.DataDirectory{}
-		gs.Servers[backend.Name].AllObjs = map[string]*datastoreapis.DataObject{}
+		gs.Servers[ds.Name].Endpoint = ds.Spec.NFS.Endpoint
+		gs.Servers[ds.Name].Connected = ds.Status.Connected
+		gs.Servers[ds.Name].SubDirs = map[string]*datastoreapis.DataDirectory{}
+		gs.Servers[ds.Name].AllDirs = map[string]*datastoreapis.DataDirectory{}
+		gs.Servers[ds.Name].AllObjs = map[string]*datastoreapis.DataObject{}
 	}
 
-	spec := backend.Spec.NFS
+	spec := ds.Spec.NFS
 	rootdir := datastoreapis.DataDirectory{
 		Name:    spec.RootDir,
 		Path:    spec.RootDir + "/",
 		SubDirs: map[string]*datastoreapis.DataDirectory{},
 		Objects: map[string]*datastoreapis.DataObject{},
 	}
-	gs.Servers[backend.Name].SubDirs[spec.RootDir] = &rootdir
+	gs.Servers[ds.Name].SubDirs[spec.RootDir] = &rootdir
 
-	return gs.Servers[backend.Name]
+	return gs.Servers[ds.Name]
 }
 
-func (gs *GlobalViewFileSystem) UpdateDataObjects(backend *datastorev1alpha1.StorageBackend, objs []*datastoreapis.DataObject) {
-	if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeMinIO {
-		gs._updateDataObjectsForMinIO(backend, objs)
-	} else if backend.Spec.Type == datastorev1alpha1.StorageBackendTypeNFS {
-		gs._updateDataObjectsForNFS(backend, objs)
+func (gs *GlobalViewFileSystem) UpdateDataObjects(ds *datastorev1alpha1.DataSource, objs []*datastoreapis.DataObject) {
+	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeMinIO {
+		gs._updateDataObjectsForMinIO(ds, objs)
+	} else if ds.Spec.Type == datastorev1alpha1.DataSourceTypeNFS {
+		gs._updateDataObjectsForNFS(ds, objs)
 	}
 }
 
-func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(backend *datastorev1alpha1.StorageBackend, objs []*datastoreapis.DataObject) {
+func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(ds *datastorev1alpha1.DataSource, objs []*datastoreapis.DataObject) {
 
-	server := gs.resetDataServer(backend)
-	bucket := server.SubDirs[backend.Spec.MinIO.Bucket]
+	server := gs.resetDataServer(ds)
+	bucket := server.SubDirs[ds.Spec.MinIO.Bucket]
 
 	gs.lock.Lock()
 	defer gs.lock.Unlock()
@@ -203,10 +203,10 @@ func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(backend *datastorev1a
 	}
 }
 
-func (gs *GlobalViewFileSystem) _updateDataObjectsForNFS(backend *datastorev1alpha1.StorageBackend, objs []*datastoreapis.DataObject) {
+func (gs *GlobalViewFileSystem) _updateDataObjectsForNFS(ds *datastorev1alpha1.DataSource, objs []*datastoreapis.DataObject) {
 
-	server := gs.resetDataServer(backend)
-	rootdir := server.SubDirs[backend.Spec.NFS.RootDir]
+	server := gs.resetDataServer(ds)
+	rootdir := server.SubDirs[ds.Spec.NFS.RootDir]
 
 	gs.lock.Lock()
 	defer gs.lock.Unlock()

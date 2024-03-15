@@ -1,0 +1,8 @@
+apiVersion: datastore.io/v1alpha1
+kind: DataLoadRequest
+metadata:
+  name: test
+spec:
+  isGlobal: true
+  dataSource: test
+  subDir: examples

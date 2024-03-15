@@ -8,39 +8,21 @@ spec:
     kind: DataLoadRequest
     listKind: DataLoadRequestList
     plural: dataloadrequests
+    shortNames:
+    - dlr
     singular: dataloadrequest
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.type
-      name: Type
+    - jsonPath: .spec.dataSource
+      name: DataSource
       type: string
-    - jsonPath: .spec.retry
-      name: Retry
-      type: boolean
-    - jsonPath: .spec.retryInterval
-      name: RetryInterval
-      priority: 1
-      type: integer
-    - jsonPath: .status.phase
-      name: Phase
+    - jsonPath: .spec.subDir
+      name: SubDir
       type: string
-    - jsonPath: .status.retryCount
-      name: RetryCount
-      priority: 1
-      type: integer
-    - jsonPath: .status.loadingStartTime
-      name: LoadingStartTime
-      type: date
-    - jsonPath: .status.loadingCompleteTime
-      name: LoadingCompleteTime
-      type: date
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
-    - jsonPath: .status.error
-      name: Error
-      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -61,98 +43,33 @@ spec:
           spec:
             description: DataLoadRequestSpec defines the desired state of DataLoadRequest
             properties:
-              ftp:
-                properties:
-                  endpoint:
-                    type: string
-                  rootdir:
-                    default: /
-                    type: string
-                required:
-                - rootdir
-                type: object
-              minio:
-                properties:
-                  accessKeyId:
-                    type: string
-                  bucket:
-                    type: string
-                  endpoint:
-                    type: string
-                  prefix:
-                    type: string
-                  region:
-                    type: string
-                  secretAccessKey:
-                    type: string
-                required:
-                - accessKeyId
-                - bucket
-                - secretAccessKey
-                type: object
-              nfs:
-                properties:
-                  endpoint:
-                    type: string
-                  export:
-                    type: string
-                  rootdir:
-                    default: .
-                    type: string
-                required:
-                - export
-                - rootdir
-                type: object
-              node:
-                description: name of the node who will loads the data
+              dataSource:
+                description: name of the data source
                 type: string
-              retry:
-                default: false
+              isGlobal:
+                default: true
+                description: indicate if the request is for all or not
                 type: boolean
-              retryInterval:
-                default: 1
-                format: int64
-                type: integer
-              type:
-                default: unknown
-                description: type of storage backend
-                enum:
-                - minio
-                - aws-s3
-                - nfs
-                - ftp
-                - unknown
+              node:
+                description: name of the node who will loads the data, and it works
+                  only when isglobal is false
+                type: string
+              subDir:
                 type: string
             required:
-            - node
-            - retry
-            - retryInterval
-            - type
+            - dataSource
+            - isGlobal
             type: object
           status:
             description: DataLoadRequestStatus defines the observed state of DataLoadRequest
             properties:
-              error:
-                type: string
-              loadingCompleteTime:
-                format: date-time
-                type: string
-              loadingStartTime:
-                format: date-time
-                type: string
-              phase:
-                enum:
-                - Preparing
-                - Loading
-                - Completed
-                - Failed
-                type: string
-              retryCount:
-                default: 0
-                format: int64
-                type: integer
+              readyNodes:
+                description: when a node finishes the data loading, record it here
+                items:
+                  type: string
+                type: array
             required:
-            - retryCount
+            - readyNodes
             type: object
         type: object
     served: true

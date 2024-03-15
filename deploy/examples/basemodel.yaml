@@ -1,0 +1,13 @@
+apiVersion: datastore.io/v1alpha1
+kind: BaseModel
+metadata:
+  name: test
+spec:
+  modelName: basemodel.pth
+  proto: minio 
+  minio:
+    endpoint: 10.6.113.100:30000
+    bucket: llm
+    prefix: models
+    secretKey: 4F2SQavrqQkxnOAT9rIv2MNG7sNLYZloX6WzwQ3B
+    accessKey: G9Wv1283nXUGUAxRjjiv

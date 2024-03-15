@@ -17,6 +17,10 @@ const (
 	lockName = "datastore-metadata-controller"
 )
 
+var (
+	namespace = flag.String("namespace", "", "Namespace of the Pod")
+)
+
 func setupLogging() {
 	log.SetLevel(log.DebugLevel)
 }
@@ -27,7 +31,7 @@ func main() {
 
 	stopCh := make(chan struct{})
 	run := func(ctx context.Context) {
-		if err := metadatacontroller.NewMetadataController().Run(stopCh); err != nil {
+		if err := metadatacontroller.NewMetadataController(*namespace).Run(stopCh); err != nil {
 			log.WithFields(log.Fields{"error": err.Error()}).Error("failed to run metadata controller")
 			os.Exit(1)
 		}

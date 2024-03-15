@@ -10,8 +10,10 @@ import (
 
 type DatastoreV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	BaseModelsGetter
+	CheckpointsGetter
 	DataLoadRequestsGetter
-	StorageBackendsGetter
+	DataSourcesGetter
 }
 
 // DatastoreV1alpha1Client is used to interact with features provided by the datastore.io group.
@@ -19,12 +21,20 @@ type DatastoreV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *DatastoreV1alpha1Client) DataLoadRequests() DataLoadRequestInterface {
-	return newDataLoadRequests(c)
+func (c *DatastoreV1alpha1Client) BaseModels(namespace string) BaseModelInterface {
+	return newBaseModels(c, namespace)
 }
 
-func (c *DatastoreV1alpha1Client) StorageBackends() StorageBackendInterface {
-	return newStorageBackends(c)
+func (c *DatastoreV1alpha1Client) Checkpoints(namespace string) CheckpointInterface {
+	return newCheckpoints(c, namespace)
+}
+
+func (c *DatastoreV1alpha1Client) DataLoadRequests(namespace string) DataLoadRequestInterface {
+	return newDataLoadRequests(c, namespace)
+}
+
+func (c *DatastoreV1alpha1Client) DataSources(namespace string) DataSourceInterface {
+	return newDataSources(c, namespace)
 }
 
 // NewForConfig creates a new DatastoreV1alpha1Client for the given config.

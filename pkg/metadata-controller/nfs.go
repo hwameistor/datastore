@@ -12,7 +12,7 @@ import (
 
 var nfsLock sync.Mutex
 
-func (mgr *storageBackendManager) _checkConnectionForNFS(backend *datastorev1alpha1.StorageBackend) (bool, error) {
+func (mgr *dataSourceManager) _checkConnectionForNFS(backend *datastorev1alpha1.DataSource) (bool, error) {
 	if backend.Spec.NFS == nil {
 		return false, fmt.Errorf("invaild NFS spec info")
 	}
@@ -23,7 +23,7 @@ func (mgr *storageBackendManager) _checkConnectionForNFS(backend *datastorev1alp
 	return nfs.IsConnected(backend.Spec.NFS)
 }
 
-func (mgr *storageBackendManager) handleStorageBackendForNFS(backend *datastorev1alpha1.StorageBackend) error {
+func (mgr *dataSourceManager) handleDataSourceForNFS(backend *datastorev1alpha1.DataSource) error {
 	logCtx := log.WithFields(log.Fields{"backend": backend.Name, "endpoint": backend.Spec.NFS.Endpoint, "export": backend.Spec.NFS.Export})
 	logCtx.Debug("Handling a NFS storage backend ...")
 
