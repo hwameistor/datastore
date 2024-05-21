@@ -81,7 +81,7 @@ compile_datamanager_arm64:
 build_datamanager_image:
 	@echo "Build datamanager image ${DATAMANAGER_IMAGE_NAME}:${IMAGE_TAG}"
 	${DOCKER_MAKE_CMD} make compile_datamanager
-	docker build -t ${DATAMANAGER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATAMANAGER_IMAGE_DOCKERFILE}.amd64 ${PROJECT_SOURCE_CODE_DIR}
+	${DOCKER_BUILDX_CMD_AMD64} -t ${DATAMANAGER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATAMANAGER_IMAGE_DOCKERFILE}.amd64 ${PROJECT_SOURCE_CODE_DIR}
 
 .PHONY: build_datamanager_image_arm64
 build_datamanager_image_arm64:
@@ -107,7 +107,7 @@ apis:
 
 .PHONY: builder
 builder:
-	docker build -t ${BUILDER_NAME}:${BUILDER_TAG} -f ${BUILDER_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
+	${DOCKER_BUILDX_CMD_AMD64} -t ${BUILDER_NAME}:${BUILDER_TAG} -f ${BUILDER_DOCKERFILE} ${PROJECT_SOURCE_CODE_DIR}
 	docker push ${BUILDER_NAME}:${BUILDER_TAG}
 
 .PHONY: juicesync

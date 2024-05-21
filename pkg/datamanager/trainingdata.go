@@ -3,13 +3,13 @@ package datamanager
 import (
 	"context"
 	"fmt"
+	"github.com/hwameistor/datastore/pkg/storage/minio"
 	"os"
 	"path/filepath"
 	"time"
 
 	datastoreclientsetv1alpha1 "github.com/hwameistor/datastore/pkg/apis/client/clientset/versioned/typed/datastore/v1alpha1"
 	datastorev1alpha1 "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
-	"github.com/hwameistor/datastore/pkg/storage/minio"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -106,7 +106,7 @@ func (mgr *TrainingDataManager) loadData(dlr *datastorev1alpha1.DataLoadRequest)
 	if ds.Spec.Type == "minio" && ds.Spec.MinIO != nil {
 		ds.Spec.MinIO.Prefix = filepath.Join(ds.Spec.MinIO.Prefix, dlr.Spec.SubDir)
 		log.WithField("minio", ds.Spec.MinIO).Debug("Start to load data ...")
-		err := minio.LoadObjects(ds.Spec.MinIO, mgr.params.LocalPathDir)
+		err := minio.LoadObjectsFromDragonfly(ds.Spec.MinIO, mgr.params.LocalPathDir, ds.Name)
 		if err != nil {
 			// clean up the directory when loading data fails
 			os.RemoveAll(mgr.params.LocalPathDir)
