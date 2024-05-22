@@ -11,7 +11,7 @@ import (
 	"github.com/hwameistor/datastore/pkg/storage/minio"
 )
 
-func (mgr *dataSourceManager) _checkConnectionForMinIO(ds *datastorev1alpha1.DataSource) (bool, error) {
+func (mgr *dataSourceManager) _checkConnectionForMinIO(ds *datastorev1alpha1.DataSet) (bool, error) {
 	if ds.Spec.MinIO == nil {
 		return false, fmt.Errorf("invaild MinIO spec info")
 	}
@@ -20,7 +20,7 @@ func (mgr *dataSourceManager) _checkConnectionForMinIO(ds *datastorev1alpha1.Dat
 
 }
 
-func (mgr *dataSourceManager) handleDataSourceForMinIO(ds *datastorev1alpha1.DataSource) error {
+func (mgr *dataSourceManager) handleDataSourceForMinIO(ds *datastorev1alpha1.DataSet) error {
 
 	log.WithFields(log.Fields{"ds": ds.Name}).Debug("Handling a MinIO storage ds ...")
 
@@ -28,7 +28,7 @@ func (mgr *dataSourceManager) handleDataSourceForMinIO(ds *datastorev1alpha1.Dat
 	if err != nil {
 		if ds.Status.Error != err.Error() {
 			ds.Status.Error = err.Error()
-			if _, err := mgr.dsClientSet.DatastoreV1alpha1().DataSources(mgr.namespace).UpdateStatus(context.Background(), ds, metav1.UpdateOptions{}); err != nil {
+			if _, err := mgr.dsClientSet.DatastoreV1alpha1().DataSets(mgr.namespace).UpdateStatus(context.Background(), ds, metav1.UpdateOptions{}); err != nil {
 				log.WithField("Message", ds.Status.Error).WithError(err).Error("Failed to update status of ds")
 			}
 		}

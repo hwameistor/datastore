@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hwameistor-dataload-manager
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: hwameistor-dataload-manager
+  template:
+    metadata:
+      labels:
+        app: hwameistor-dataload-manager
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: lvm.hwameistor.io/enable
+                    operator: NotIn
+                    values:
+                      - "false"
+      containers:
+        - name: dataload-manager
+          image: 10.6.118.138:5000/hwameistor:dataload_manager_99.9-dev
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          env:
+            - name: MY_NODENAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: host-dev
+              mountPath: /dev
+            - name: host-mnt
+              mountPath: /mnt
+              mountPropagation: Bidirectional
+          args:
+            - --nodename=$(MY_NODENAME)
+      dnsPolicy: ClusterFirstWithHostNet
+      hostPID: true
+      volumes:
+        - name: host-dev
+          hostPath:
+            path: /dev
+        - name: host-mnt
+          hostPath:
+            path: /mnt
+            type: DirectoryOrCreate
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
