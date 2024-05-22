@@ -16,7 +16,7 @@ type GlobalViewFileSystem struct {
 	lock sync.Mutex
 }
 
-func (gs *GlobalViewFileSystem) UpdateDataServer(ds *datastorev1alpha1.DataSource) {
+func (gs *GlobalViewFileSystem) UpdateDataServer(ds *datastorev1alpha1.DataSet) {
 	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeMinIO {
 		gs._updateDataServerForMinIO(ds)
 	}
@@ -25,7 +25,7 @@ func (gs *GlobalViewFileSystem) UpdateDataServer(ds *datastorev1alpha1.DataSourc
 	}
 }
 
-func (gs *GlobalViewFileSystem) _updateDataServerForMinIO(ds *datastorev1alpha1.DataSource) {
+func (gs *GlobalViewFileSystem) _updateDataServerForMinIO(ds *datastorev1alpha1.DataSet) {
 	if len(gs.Servers) == 0 {
 		return
 	}
@@ -41,7 +41,7 @@ func (gs *GlobalViewFileSystem) _updateDataServerForMinIO(ds *datastorev1alpha1.
 	gs.lock.Unlock()
 }
 
-func (gs *GlobalViewFileSystem) _updateDataServerForNFS(ds *datastorev1alpha1.DataSource) {
+func (gs *GlobalViewFileSystem) _updateDataServerForNFS(ds *datastorev1alpha1.DataSet) {
 	if len(gs.Servers) == 0 {
 		return
 	}
@@ -57,7 +57,7 @@ func (gs *GlobalViewFileSystem) _updateDataServerForNFS(ds *datastorev1alpha1.Da
 	gs.lock.Unlock()
 }
 
-func (gs *GlobalViewFileSystem) RemoveDataServer(ds *datastorev1alpha1.DataSource) {
+func (gs *GlobalViewFileSystem) RemoveDataServer(ds *datastorev1alpha1.DataSet) {
 	log.WithFields(log.Fields{"ds": ds.Name}).Debug("Removing a storage ds ...")
 
 	if len(gs.Servers) == 0 {
@@ -74,7 +74,7 @@ func (gs *GlobalViewFileSystem) RemoveDataServer(ds *datastorev1alpha1.DataSourc
 	gs.lock.Unlock()
 }
 
-func (gs *GlobalViewFileSystem) resetDataServer(ds *datastorev1alpha1.DataSource) *datastoreapis.DataServer {
+func (gs *GlobalViewFileSystem) resetDataServer(ds *datastorev1alpha1.DataSet) *datastoreapis.DataServer {
 	gs.lock.Lock()
 	defer gs.lock.Unlock()
 
@@ -88,7 +88,7 @@ func (gs *GlobalViewFileSystem) resetDataServer(ds *datastorev1alpha1.DataSource
 	return nil
 }
 
-func (gs *GlobalViewFileSystem) _resetDataServerForMinIO(ds *datastorev1alpha1.DataSource) *datastoreapis.DataServer {
+func (gs *GlobalViewFileSystem) _resetDataServerForMinIO(ds *datastorev1alpha1.DataSet) *datastoreapis.DataServer {
 
 	if len(gs.Servers) == 0 {
 		gs.Servers = map[string]*datastoreapis.DataServer{}
@@ -123,7 +123,7 @@ func (gs *GlobalViewFileSystem) _resetDataServerForMinIO(ds *datastorev1alpha1.D
 	return gs.Servers[ds.Name]
 }
 
-func (gs *GlobalViewFileSystem) _resetDataServerForNFS(ds *datastorev1alpha1.DataSource) *datastoreapis.DataServer {
+func (gs *GlobalViewFileSystem) _resetDataServerForNFS(ds *datastorev1alpha1.DataSet) *datastoreapis.DataServer {
 
 	if len(gs.Servers) == 0 {
 		gs.Servers = map[string]*datastoreapis.DataServer{}
@@ -157,7 +157,7 @@ func (gs *GlobalViewFileSystem) _resetDataServerForNFS(ds *datastorev1alpha1.Dat
 	return gs.Servers[ds.Name]
 }
 
-func (gs *GlobalViewFileSystem) UpdateDataObjects(ds *datastorev1alpha1.DataSource, objs []*datastoreapis.DataObject) {
+func (gs *GlobalViewFileSystem) UpdateDataObjects(ds *datastorev1alpha1.DataSet, objs []*datastoreapis.DataObject) {
 	if ds.Spec.Type == datastorev1alpha1.DataSourceTypeMinIO {
 		gs._updateDataObjectsForMinIO(ds, objs)
 	} else if ds.Spec.Type == datastorev1alpha1.DataSourceTypeNFS {
@@ -165,7 +165,7 @@ func (gs *GlobalViewFileSystem) UpdateDataObjects(ds *datastorev1alpha1.DataSour
 	}
 }
 
-func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(ds *datastorev1alpha1.DataSource, objs []*datastoreapis.DataObject) {
+func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(ds *datastorev1alpha1.DataSet, objs []*datastoreapis.DataObject) {
 
 	server := gs.resetDataServer(ds)
 	bucket := server.SubDirs[ds.Spec.MinIO.Bucket]
@@ -203,7 +203,7 @@ func (gs *GlobalViewFileSystem) _updateDataObjectsForMinIO(ds *datastorev1alpha1
 	}
 }
 
-func (gs *GlobalViewFileSystem) _updateDataObjectsForNFS(ds *datastorev1alpha1.DataSource, objs []*datastoreapis.DataObject) {
+func (gs *GlobalViewFileSystem) _updateDataObjectsForNFS(ds *datastorev1alpha1.DataSet, objs []*datastoreapis.DataObject) {
 
 	server := gs.resetDataServer(ds)
 	rootdir := server.SubDirs[ds.Spec.NFS.RootDir]
