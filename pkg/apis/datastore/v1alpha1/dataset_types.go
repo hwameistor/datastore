@@ -7,8 +7,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// DataSourceSpec defines the desired state of DataSource
-type DataSourceSpec struct {
+// DataSetSpec defines the desired state of DataSet
+type DataSetSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -29,8 +29,8 @@ type DataSourceSpec struct {
 	Refresh bool `json:"refresh"`
 }
 
-// DataSourceStatus defines the observed state of DataSource
-type DataSourceStatus struct {
+// DataSetStatus defines the observed state of DataSet
+type DataSetStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -53,9 +53,9 @@ type DataSourceStatus struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// DataSource is the Schema for the datasources API
+// DataSet is the Schema for the DataSets API
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=datasources,scope=Namespaced,shortName=dsrc
+// +kubebuilder:resource:path=datasets,scope=Namespaced,shortName=dsrc
 // +kubebuilder:printcolumn:JSONPath=".spec.type",name=Type,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.lastRefreshTime",name=LastRefreshTime,type=date
 // +kubebuilder:printcolumn:JSONPath=".spec.refresh",name=Refresh,type=boolean,priority=1
@@ -63,23 +63,23 @@ type DataSourceStatus struct {
 // +kubebuilder:printcolumn:JSONPath=".status.connected",name=Connected,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 // +kubebuilder:printcolumn:JSONPath=".status.error",name=Error,type=string
-type DataSource struct {
+type DataSet struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DataSourceSpec   `json:"spec,omitempty"`
-	Status DataSourceStatus `json:"status,omitempty"`
+	Spec   DataSetSpec   `json:"spec,omitempty"`
+	Status DataSetStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// DataSourceList contains a list of DataSource
-type DataSourceList struct {
+// DataSetList contains a list of DataSet
+type DataSetList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []DataSource `json:"items"`
+	Items           []DataSet `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&DataSource{}, &DataSourceList{})
+	SchemeBuilder.Register(&DataSet{}, &DataSetList{})
 }

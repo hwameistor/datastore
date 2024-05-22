@@ -24,8 +24,8 @@ func (c *FakeDatastoreV1alpha1) DataLoadRequests(namespace string) v1alpha1.Data
 	return &FakeDataLoadRequests{c, namespace}
 }
 
-func (c *FakeDatastoreV1alpha1) DataSources(namespace string) v1alpha1.DataSourceInterface {
-	return &FakeDataSources{c, namespace}
+func (c *FakeDatastoreV1alpha1) DataSets(namespace string) v1alpha1.DataSetInterface {
+	return &FakeDataSets{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

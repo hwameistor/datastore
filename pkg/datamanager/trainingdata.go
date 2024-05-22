@@ -98,9 +98,9 @@ func (mgr *TrainingDataManager) loadData(dlr *datastorev1alpha1.DataLoadRequest)
 		log.WithField("localdir", mgr.params.LocalPathDir).WithError(err).Error("Failed to clean up the local directory for training data")
 		return err
 	}
-	ds, err := mgr.clientset.DataSources(dlr.Namespace).Get(context.Background(), dlr.Spec.DataSource, metav1.GetOptions{})
+	ds, err := mgr.clientset.DataSets(dlr.Namespace).Get(context.Background(), dlr.Spec.DataSet, metav1.GetOptions{})
 	if err != nil {
-		log.WithFields(log.Fields{"namespace": dlr.Namespace, "datasource": dlr.Spec.DataSource}).WithError(err).Error("Failed to get datasource")
+		log.WithFields(log.Fields{"namespace": dlr.Namespace, "datasource": dlr.Spec.DataSet}).WithError(err).Error("Failed to get datasource")
 		return err
 	}
 	if ds.Spec.Type == "minio" && ds.Spec.MinIO != nil {

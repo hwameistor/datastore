@@ -14,8 +14,8 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.dataSource
-      name: DataSource
+    - jsonPath: .spec.dataSet
+      name: DataSet
       type: string
     - jsonPath: .spec.subDir
       name: SubDir
@@ -43,8 +43,8 @@ spec:
           spec:
             description: DataLoadRequestSpec defines the desired state of DataLoadRequest
             properties:
-              dataSource:
-                description: name of the data source
+              dataSet:
+                description: name of the dataSet source
                 type: string
               isGlobal:
                 default: true
@@ -57,7 +57,7 @@ spec:
               subDir:
                 type: string
             required:
-            - dataSource
+            - dataSet
             - isGlobal
             type: object
           status:
