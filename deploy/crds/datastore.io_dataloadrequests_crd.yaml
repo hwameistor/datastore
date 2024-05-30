@@ -68,6 +68,10 @@ spec:
                 items:
                   type: string
                 type: array
+              state:
+                description: State of the operation, e.g. submitted, started, completed,
+                  abort, ...
+                type: string
             required:
             - readyNodes
             type: object

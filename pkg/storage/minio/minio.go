@@ -9,6 +9,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/mount-utils"
+	utilexec "k8s.io/utils/exec"
+
 	"os"
 	"strings"
 	"time"
@@ -26,7 +29,21 @@ const (
 	podUIidEnvVar   = "POD_UUID"
 	podNameEnvVar   = "POD_NAME"
 	NameSpaceEnvVar = "NAMESPACE"
+	MountPoint      = "/mnt/hwameistor/datastore/"
 )
+
+var mounter *mount.SafeFormatAndMount
+
+func init() {
+	mounter = NewMounter()
+}
+
+func NewMounter() *mount.SafeFormatAndMount {
+	return &mount.SafeFormatAndMount{
+		Interface: mount.New("/bin/mount"),
+		Exec:      utilexec.New(),
+	}
+}
 
 func newClient(spec *datastorev1alpha1.MinIOSpec) (*minio.Client, error) {
 	return minio.New(spec.Endpoint, &minio.Options{
@@ -134,7 +151,83 @@ func LoadObjectsFromDragonfly(spec *datastorev1alpha1.MinIOSpec, localDir string
 		return err
 	}
 
-	podUID := os.Getenv(podUIidEnvVar)
+	volumeName := dataSourceName
+	poolClass, fsType, err := getPoolClassAndFsType(volumeName, clientset)
+	if err != nil {
+		log.WithError(err).Error("getPoolClassAndFsType")
+		return err
+	}
+
+	PoolName := "LocalStorage_Pool" + poolClass
+
+	mountPoint := MountPoint + volumeName
+	devPath := fmt.Sprintf("/dev/%s/%s", PoolName, volumeName)
+	if !isStringInArray(mountPoint, getDeviceMountPoints(devPath)) {
+		err = formatAndMount(mountPoint, devPath, fsType, []string{})
+		if err != nil {
+			log.WithError(err)
+			return err
+		}
+	}
+
+	err = dfgetData(clientset, spec, volumeName, mountPoint, localDir)
+	if err != nil {
+		log.WithError(err)
+		return err
+	}
+	if err := mounter.Unmount(mountPoint); err != nil {
+		if !os.IsNotExist(err) {
+			log.WithError(err)
+			return err
+		} else {
+			log.Debugf("mountPoint delete success:%s", mountPoint)
+		}
+	}
+	return nil
+}
+
+func LoadObjectsFromDragonflyV2(clientset *kubernetes.Clientset, spec *datastorev1alpha1.MinIOSpec, localDir string, dataSourceName string) error {
+
+	volumeName := dataSourceName
+	poolClass, fsType, err := getPoolClassAndFsType(volumeName, clientset)
+	if err != nil {
+		log.WithError(err).Error("getPoolClassAndFsType")
+		return err
+	}
+
+	PoolName := "LocalStorage_Pool" + poolClass
+
+	mountPoint := MountPoint + volumeName
+	devPath := fmt.Sprintf("/dev/%s/%s", PoolName, volumeName)
+	if !isStringInArray(mountPoint, getDeviceMountPoints(devPath)) {
+		err = formatAndMount(mountPoint, devPath, fsType, []string{})
+		if err != nil {
+			log.WithError(err)
+			return err
+		}
+	}
+	start := time.Now()
+	err = dfgetDataV2(spec, mountPoint, localDir)
+	if err != nil {
+		log.WithError(err)
+		return err
+	}
+	end := time.Now()
+	duration := end.Sub(start)
+	fmt.Printf("dataset dataLoad execution time: %s\n", duration)
+	if err := mounter.Unmount(mountPoint); err != nil {
+		if !os.IsNotExist(err) {
+			log.WithError(err)
+			return err
+		} else {
+			log.Debugf("mountPoint delete success:%s", mountPoint)
+		}
+	}
+	return nil
+}
+
+// 后期设计为job
+func dfgetData(clientset kubernetes.Interface, spec *datastorev1alpha1.MinIOSpec, volumeName, mountPoint, localDir string) error {
 	namespace := os.Getenv(NameSpaceEnvVar)
 	podName := os.Getenv(podNameEnvVar)
 
@@ -144,22 +237,17 @@ func LoadObjectsFromDragonfly(spec *datastorev1alpha1.MinIOSpec, localDir string
 		log.WithError(err).Error("Failed to get pod:%s", podName)
 		return err
 	}
-	volumeName := dataSourceName
 	genDir, err := findGenDirPath(pod, volumeName, clientset)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		log.Error(err)
 		return err
 	}
-	fmt.Printf("Generated directory path: %s\n", genDir)
 
 	if localDir[0:len(genDir)] == genDir {
 		localDir = localDir[len(genDir):]
 	} else {
 		return fmt.Errorf("The data storage path configuration is incorrect:%s", localDir)
 	}
-
-	output := "/var/lib/kubelet/pods/" + podUID + "/volumes/kubernetes.io~csi/" + volumeName + "/mount" + localDir
-	log.Debugf(fmt.Sprintf("output is %s:", output))
 
 	spec.Prefix = strings.TrimRight(strings.TrimLeft(spec.Prefix, "/"), "/")
 
@@ -173,7 +261,7 @@ func LoadObjectsFromDragonfly(spec *datastorev1alpha1.MinIOSpec, localDir string
 		"--header", "awsSecretAccessKey: "+spec.SecretKey,
 		"--header", "awsS3ForcePathStyle: true",
 		"--url", fmt.Sprintf("s3://%s/%s/", spec.Bucket, spec.Prefix),
-		"--output", output,
+		"--output", mountPoint+localDir,
 	)
 
 	params := exechelper.ExecParams{
@@ -182,6 +270,52 @@ func LoadObjectsFromDragonfly(spec *datastorev1alpha1.MinIOSpec, localDir string
 		Timeout: int(time.Hour),
 	}
 	return nsexecutor.New().RunCommand(params).Error
+}
+
+func dfgetDataV2(spec *datastorev1alpha1.MinIOSpec, mountPoint, localDir string) error {
+
+	spec.Prefix = strings.TrimRight(strings.TrimLeft(spec.Prefix, "/"), "/")
+
+	var dfget []string
+	dfget = append(dfget,
+		"--recursive",
+		"--level=100",
+		"--header", "awsEndpoint: "+spec.Endpoint,
+		"--header", "awsRegion: "+spec.Region,
+		"--header", "awsAccessKeyID: "+spec.AccessKey,
+		"--header", "awsSecretAccessKey: "+spec.SecretKey,
+		"--header", "awsS3ForcePathStyle: true",
+		"--url", fmt.Sprintf("s3://%s/%s/", spec.Bucket, spec.Prefix),
+		"--output", mountPoint+localDir,
+	)
+
+	params := exechelper.ExecParams{
+		CmdName: "dfget",
+		CmdArgs: dfget,
+		Timeout: int(time.Hour),
+	}
+	return nsexecutor.New().RunCommand(params).Error
+}
+
+func getPoolClassAndFsType(volumeName string, clientset kubernetes.Interface) (poolClass string, fsType string, err error) {
+	pvClient := clientset.CoreV1().PersistentVolumes()
+	pv, err := pvClient.Get(context.TODO(), volumeName, metav1.GetOptions{})
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get persistent volume %s: %v", volumeName, err)
+	}
+
+	if pv == nil {
+		return "", "", fmt.Errorf("persistent volume %s not found", volumeName)
+	}
+
+	poolClass = pv.Spec.CSI.VolumeAttributes["poolClass"]
+	fsType = pv.Spec.CSI.FSType
+	if fsType == "" {
+		fsType = "xfs"
+	}
+
+	return poolClass, fsType, nil
+
 }
 
 // findGenDirPath 在给定的Pod中查找与特定PersistentVolumeClaim (PVC) 相关联的卷的挂载路径
@@ -235,4 +369,45 @@ func findMountPathInContainers(containers []v1.Container, volumeName string) (st
 		}
 	}
 	return "", false
+}
+
+func isStringInArray(str string, strs []string) bool {
+	for _, s := range strs {
+		if str == s {
+			return true
+		}
+	}
+	return false
+}
+
+func getDeviceMountPoints(devPath string) []string {
+
+	mps := []string{}
+	result := nsexecutor.New().RunCommand(exechelper.ExecParams{
+		CmdName: "findmnt",
+		CmdArgs: []string{"-n", "--output=target", "--source", devPath},
+	})
+	if result.ExitCode == 0 {
+		for _, mp := range strings.Split(result.OutBuf.String(), "\n") {
+			if strings.Trim(mp, " ") != "" {
+				mps = append(mps, mp)
+			}
+		}
+	}
+	return mps
+}
+
+func formatAndMount(mountPoint, devPath, fsType string, options []string) error {
+	if err := makeDir(mountPoint); err != nil {
+		return err
+	}
+	return mounter.FormatAndMount(devPath, mountPoint, fsType, options)
+}
+
+func makeDir(pathname string) error {
+	err := os.MkdirAll(pathname, os.FileMode(0777))
+	if err != nil && !os.IsExist(err) {
+		return err
+	}
+	return nil
 }

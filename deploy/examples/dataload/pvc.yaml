@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hwameistor-dataset
+  namespace: default
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Gi
+  #storageClassName: hwameistor-storage-lvm-hdd-static
+  volumeMode: Filesystem
+  volumeName: dataset-test # 配置datasource Name
+  resources:
+    requests:
+      storage: 1Gi

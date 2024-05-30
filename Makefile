@@ -101,6 +101,83 @@ release_datamanager:
 	${MUILT_ARCH_PUSH_CMD} -i ${DATAMANAGER_IMAGE_NAME}:${RELEASE_TAG}
 
 
+
+#### for DATALOAD-MANAGER #########
+DATALOAD_MANAGER_MODULE_NAME = dataload-manager
+DATALOAD_MANAGER_BUILD_INPUT = ${CMDS_DIR}/${DATALOAD_MANAGER_MODULE_NAME}/main.go
+.PHONY: run_dataload_manager
+run_dataload_manager:
+	go run ${BUILD_OPTIONS} ${DATALOAD_MANAGER_BUILD_INPUT} --isTrainMaster=false --isInitRole=true --baseModelLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/models --checkpointLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/checkpoints --checkpointLocalDirOnHost=/Users/liangsun/Downloads/checkpoints --trainingdataLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/training --trainingdataLocalDirOnHost=/Users/liangsun/Downloads/training
+
+.PHONY: compile_dataload_manager
+compile_dataload_manager:
+	GOARCH=amd64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATALOAD_MANAGER_BUILD_OUTPUT} ${DATALOAD_MANAGER_BUILD_INPUT}
+
+.PHONY: compile_dataload_manager_arm64
+compile_dataload_manager_arm64:
+	GOARCH=arm64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATALOAD_MANAGER_BUILD_OUTPUT} ${DATALOAD_MANAGER_BUILD_INPUT}
+
+.PHONY: build_dataload_manager_image
+build_dataload_manager_image:
+	@echo "Build dataload_manager image ${DATALOAD_MANAGER_IMAGE_NAME}:${IMAGE_TAG}"
+	${DOCKER_MAKE_CMD} make compile_dataload_manager
+	${DOCKER_BUILDX_CMD_AMD64} -t ${DATALOAD_MANAGER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATALOAD_MANAGER_IMAGE_DOCKERFILE}.amd64 ${PROJECT_SOURCE_CODE_DIR}
+
+.PHONY: build_dataload_manager_image_arm64
+build_dataload_manager_image_arm64:
+	@echo "Build dataload_manager image ${DATALOAD_MANAGER_IMAGE_NAME}:${IMAGE_TAG}"
+	${DOCKER_MAKE_CMD} make compile_dataload_manager_arm64
+	${DOCKER_BUILDX_CMD_ARM64} -t ${DATALOAD_MANAGER_IMAGE_NAME}:${IMAGE_TAG} -f ${DATALOAD_MANAGER_IMAGE_DOCKERFILE}.arm64 ${PROJECT_SOURCE_CODE_DIR}
+
+.PHONY: release_dataload_manager
+release_dataload_manager:
+	# build for amd64 version
+	${DOCKER_MAKE_CMD} make compile_dataload_manager
+	${DOCKER_BUILDX_CMD_AMD64} -t ${DATALOAD_MANAGER_IMAGE_NAME}:${RELEASE_TAG}-amd64 -f ${DATALOAD_MANAGER_IMAGE_DOCKERFILE}.amd64 ${PROJECT_SOURCE_CODE_DIR}
+	# build for arm64 version
+	${DOCKER_MAKE_CMD} make compile_dataload_manager_arm64
+	${DOCKER_BUILDX_CMD_ARM64} -t ${DATALOAD_MANAGER_IMAGE_NAME}:${RELEASE_TAG}-arm64 -f ${DATALOAD_MANAGER_IMAGE_DOCKERFILE}.arm64 ${PROJECT_SOURCE_CODE_DIR}
+	# push to a public registry
+	${MUILT_ARCH_PUSH_CMD} -i ${DATALOAD_MANAGER_IMAGE_NAME}:${RELEASE_TAG}
+
+#### for DATALOAD-INIT #########
+DATALOAD_INIT_MODULE_NAME = dataload-init
+DATALOAD_INIT_BUILD_INPUT = ${CMDS_DIR}/${DATALOAD_INIT_MODULE_NAME}/main.go
+.PHONY: run_dataload_init
+run_dataload_init:
+	go run ${BUILD_OPTIONS} ${DATALOAD_INIT_BUILD_INPUT} --isTrainMaster=false --isInitRole=true --baseModelLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/models --checkpointLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/checkpoints --checkpointLocalDirOnHost=/Users/liangsun/Downloads/checkpoints --trainingdataLocalDir=/Users/liangsun/Workspace/projects/golang/src/github.com/hwameistor/datastore/_build/training --trainingdataLocalDirOnHost=/Users/liangsun/Downloads/training
+
+.PHONY: compile_dataload_init
+compile_dataload_init:
+	GOARCH=amd64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATALOAD_INIT_BUILD_OUTPUT} ${DATALOAD_INIT_BUILD_INPUT}
+
+.PHONY: compile_dataload_init_arm64
+compile_dataload_init_arm64:
+	GOARCH=arm64 ${BUILD_ENVS} ${BUILD_CMD} ${BUILD_OPTIONS} -o ${DATALOAD_INIT_BUILD_OUTPUT} ${DATALOAD_INIT_BUILD_INPUT}
+
+.PHONY: build_dataload_init_image
+build_dataload_init_image:
+	@echo "Build dataload_init image ${DATALOAD_INIT_IMAGE_NAME}:${IMAGE_TAG}"
+	${DOCKER_MAKE_CMD} make compile_dataload_init
+	${DOCKER_BUILDX_CMD_AMD64} -t ${DATALOAD_INIT_IMAGE_NAME}:${IMAGE_TAG} -f ${DATALOAD_INIT_IMAGE_DOCKERFILE}.amd64 ${PROJECT_SOURCE_CODE_DIR}
+
+.PHONY: build_dataload_init_image_arm64
+build_dataload_init_image_arm64:
+	@echo "Build dataload_init_arm64 image ${DATALOAD_INIT_IMAGE_NAME}:${IMAGE_TAG}"
+	${DOCKER_MAKE_CMD} make compile_dataload_init_arm64
+	${DOCKER_BUILDX_CMD_ARM64} -t ${DATALOAD_INIT_IMAGE_NAME}:${IMAGE_TAG} -f ${DATALOAD_INIT_IMAGE_DOCKERFILE}.arm64 ${PROJECT_SOURCE_CODE_DIR}
+
+.PHONY: release_dataload_init
+release_dataload_init:
+	# build for amd64 version
+	${DOCKER_MAKE_CMD} make compile_dataload_init
+	${DOCKER_BUILDX_CMD_AMD64} -t ${DATALOAD_INIT_IMAGE_NAME}:${RELEASE_TAG}-amd64 -f ${DATALOAD_INIT_IMAGE_DOCKERFILE}.amd64 ${PROJECT_SOURCE_CODE_DIR}
+	# build for arm64 version
+	${DOCKER_MAKE_CMD} make compile_dataload_init_arm64
+	${DOCKER_BUILDX_CMD_ARM64} -t ${DATALOAD_INIT_IMAGE_NAME}:${RELEASE_TAG}-arm64 -f ${DATALOAD_INIT_IMAGE_DOCKERFILE}.arm64 ${PROJECT_SOURCE_CODE_DIR}
+	# push to a public registry
+	${MUILT_ARCH_PUSH_CMD} -i ${DATALOAD_INIT_IMAGE_NAME}:${RELEASE_TAG}
+
 .PHONY: apis
 apis:
 	${DOCKER_MAKE_CMD} make _gen-apis

@@ -60,6 +60,11 @@ func (mgr *TrainingDataManager) Cook() error {
 		return fmt.Errorf("no valid config")
 	}
 
+	if dlr.Spec.DataSet == "" {
+		log.WithFields(log.Fields{"config": mgr.params.ConfigName, "spec": dlr.Spec}).Debug("The config dataset in empty")
+		return fmt.Errorf("no valid config")
+	}
+
 	isLoadedBefore := utils.IsStringInSet(mgr.params.NodeName, dlr.Status.ReadyNodes)
 
 	if len(files) > 0 && isLoadedBefore {
@@ -100,7 +105,7 @@ func (mgr *TrainingDataManager) loadData(dlr *datastorev1alpha1.DataLoadRequest)
 	}
 	ds, err := mgr.clientset.DataSets(dlr.Namespace).Get(context.Background(), dlr.Spec.DataSet, metav1.GetOptions{})
 	if err != nil {
-		log.WithFields(log.Fields{"namespace": dlr.Namespace, "datasource": dlr.Spec.DataSet}).WithError(err).Error("Failed to get datasource")
+		log.WithFields(log.Fields{"namespace": dlr.Namespace, "dataset": dlr.Spec.DataSet}).WithError(err).Error("Failed to get dataset")
 		return err
 	}
 	if ds.Spec.Type == "minio" && ds.Spec.MinIO != nil {

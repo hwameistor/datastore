@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nginx-dataload
+  namespace: default
+spec:
+  serviceName: nginx-dataload
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-dataload
+  template:
+    metadata:
+      labels:
+        app: nginx-dataload
+    spec:
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      initContainers:
+        - name: init-dataload
+          image: 10.6.118.138:5000/hwameistor:dataload-init_99.9-dev
+          imagePullPolicy: Always
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MY_NODENAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: PVC_NAME
+              value: hwameistor-dataset
+          args:
+            - --nodename=$(MY_NODENAME)
+            - --subdir=test
+      containers:
+        - name: nginx
+          image: docker.io/library/nginx:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          ports:
+            - containerPort: 80
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hwameistor-dataset

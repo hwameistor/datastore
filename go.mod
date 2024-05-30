@@ -6,7 +6,7 @@ require (
 	github.com/operator-framework/operator-sdk v0.18.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/pflag v1.0.5 // indirect
-	k8s.io/api v0.26.0 // indirect
+	k8s.io/api v0.26.0
 	k8s.io/apimachinery v0.26.0
 	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/controller-runtime v0.9.2
@@ -16,7 +16,7 @@ require (
 	github.com/kubernetes-csi/csi-lib-utils v0.11.0
 	golang.org/x/net v0.19.0 // indirect
 	k8s.io/code-generator v0.25.2
-	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
+	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 )
 
 require (
@@ -31,6 +31,7 @@ require (
 	github.com/pytool/ssh v0.0.0-20190312091242-5aaea5918db7
 	github.com/radovskyb/watcher v1.0.7
 	github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00
+	k8s.io/mount-utils v0.24.0
 )
 
 require (
@@ -89,7 +90,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01 // indirect
-	k8s.io/klog/v2 v2.80.1 // indirect
+	k8s.io/klog/v2 v2.80.1
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
