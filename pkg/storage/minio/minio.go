@@ -206,12 +206,15 @@ func LoadObjectsFromDragonflyV2(clientset *kubernetes.Clientset, spec *datastore
 			return err
 		}
 	}
-
+	start := time.Now()
 	err = dfgetDataV2(spec, mountPoint, localDir)
 	if err != nil {
 		log.WithError(err)
 		return err
 	}
+	end := time.Now()
+	duration := end.Sub(start)
+	fmt.Printf("dataset dataLoad execution time: %s\n", duration)
 	if err := mounter.Unmount(mountPoint); err != nil {
 		if !os.IsNotExist(err) {
 			log.WithError(err)

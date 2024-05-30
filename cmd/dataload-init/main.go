@@ -67,23 +67,19 @@ func main() {
 	dataSetName := pvc.Spec.VolumeName
 	dataLoadRequest := createDataLoadRequest(dataSetName, *subDir)
 	dsClient, err := datastorev1alpha1.NewForConfig(config)
-
-	// 开始计时
-	start := time.Now()
-	if err := createCustomResource(dsClient, dataLoadRequest, namespace); err != nil {
-		log.WithError(err).Error("Failed to create custom resource")
-		return
-	}
-
-	fmt.Println("Created custom resource")
-
 	watcher, err := watchCustomResource(dsClient, namespace, dataSetName)
 	if err != nil {
 		log.WithError(err).Error("Failed to start watching custom resource")
 		return
 	}
 	defer watcher.Stop()
-
+	// 开始计时
+	start := time.Now()
+	if err := createCustomResource(dsClient, dataLoadRequest, namespace); err != nil {
+		log.WithError(err).Error("Failed to create custom resource")
+		return
+	}
+	fmt.Println("Created custom resource")
 	for event := range watcher.ResultChan() {
 		if event.Type == watch.Deleted {
 			fmt.Println("Custom resource deleted, exiting")

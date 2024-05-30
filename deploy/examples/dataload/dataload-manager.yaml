@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: hwameistor-dataload-manager
-  namespace: default
+  namespace: hwameistor
 spec:
   selector:
     matchLabels:
@@ -41,6 +41,8 @@ spec:
               mountPropagation: Bidirectional
           args:
             - --nodename=$(MY_NODENAME)
+      serviceAccount: hwameistor-admin
+      serviceAccountName: hwameistor-admin
       dnsPolicy: ClusterFirstWithHostNet
       hostPID: true
       volumes:
