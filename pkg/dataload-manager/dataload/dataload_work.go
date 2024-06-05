@@ -21,8 +21,6 @@ import (
 	"strings"
 )
 
-const LocalDir = "/training"
-
 var mounter *mount.SafeFormatAndMount
 
 func init() {
@@ -161,9 +159,10 @@ func (ctr *dlrController) DataLoadStart(dlr *datastore.DataLoadRequest) error {
 	}
 
 	if ds.Spec.Type == "minio" && ds.Spec.MinIO != nil {
-		ds.Spec.MinIO.Prefix = filepath.Join(ds.Spec.MinIO.Prefix, dlr.Spec.SubDir)
-		log.WithField("minio", ds.Spec.MinIO).Debug("Start to load data ...")
-		err := minio.LoadObjectsFromDragonflyV2(ctr.kubeClient, ds.Spec.MinIO, LocalDir, ds.Name)
+		if dlr.Spec.SubDir != "" {
+			ds.Spec.MinIO.Prefix = filepath.Join(ds.Spec.MinIO.Prefix, dlr.Spec.SubDir)
+		}
+		err := minio.LoadObjectsFromDragonflyV2(ctr.kubeClient, ds.Spec.MinIO, dlr.Spec.DstDir, ds.Name)
 		if err != nil {
 			return err
 		}
@@ -179,7 +178,6 @@ func (ctr *dlrController) DataLoadStart(dlr *datastore.DataLoadRequest) error {
 }
 
 func (ctr *dlrController) DataLoadComplete(dlr *datastore.DataLoadRequest) error {
-	//删除dlr资源
 	err := ctr.dlrClientset.DatastoreV1alpha1().DataLoadRequests(dlr.Namespace).Delete(context.TODO(), dlr.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return err

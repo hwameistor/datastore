@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -20,7 +21,7 @@ import (
 
 var (
 	nodeName = flag.String("nodename", "", "Node name")
-	subDir   = flag.String("subdir", "", "subdir")
+	dstDir   = flag.String("dstdir", "", "destination Directory")
 )
 
 const (
@@ -36,54 +37,56 @@ func main() {
 		log.WithFields(log.Fields{"nodename": *nodeName}).Error("Invalid node name")
 		os.Exit(1)
 	}
-	if *subDir == "" {
-		log.WithFields(log.Fields{"subdir": *subDir}).Error("Invalid subdir path")
-		os.Exit(1)
-	}
+
 	namespace := os.Getenv(NameSpaceEnvVar)
 	pvcName := os.Getenv(pvcNameEnvVar)
 
 	if namespace == "" || pvcName == "" {
 		log.Fatal("Namespace or PVC Name environment variables are not set.")
+		os.Exit(1)
 	}
 
 	config, err := getConfig()
 	if err != nil {
 		log.WithError(err).Fatal("Failed to get Kubernetes configuration")
+		os.Exit(1)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to create Kubernetes clientset")
+		os.Exit(1)
 	}
 
 	pvcClient := clientset.CoreV1().PersistentVolumeClaims(namespace)
 	pvc, err := getPersistentVolumeClaim(pvcClient, pvcName)
 	if err != nil {
 		log.WithError(err).Error("Failed to get PVC")
-		return
+		os.Exit(1)
 	}
 
 	dataSetName := pvc.Spec.VolumeName
-	dataLoadRequest := createDataLoadRequest(dataSetName, *subDir)
+	dataLoadRequestName := dataSetName + "-" + generateRandomSuffix()
+	dataLoadRequest := createDataLoadRequest(dataLoadRequestName, dataSetName)
+	if *dstDir != "" {
+		dataLoadRequest.Spec.DstDir = *dstDir
+	}
 	dsClient, err := datastorev1alpha1.NewForConfig(config)
-	watcher, err := watchCustomResource(dsClient, namespace, dataSetName)
+	watcher, err := watchCustomResource(dsClient, namespace, dataLoadRequestName)
 	if err != nil {
 		log.WithError(err).Error("Failed to start watching custom resource")
-		return
+		os.Exit(1)
 	}
 	defer watcher.Stop()
-	// 开始计时
 	start := time.Now()
 	if err := createCustomResource(dsClient, dataLoadRequest, namespace); err != nil {
 		log.WithError(err).Error("Failed to create custom resource")
-		return
+		os.Exit(1)
 	}
 	fmt.Println("Created custom resource")
 	for event := range watcher.ResultChan() {
 		if event.Type == watch.Deleted {
 			fmt.Println("Custom resource deleted, exiting")
-			//计时结束
 			end := time.Now()
 			duration := end.Sub(start)
 			fmt.Printf("DataLoad execution time: %s\n", duration)
@@ -104,20 +107,19 @@ func getPersistentVolumeClaim(pvcClient v1.PersistentVolumeClaimInterface, pvcNa
 	return pvcClient.Get(context.TODO(), pvcName, metav1.GetOptions{})
 }
 
-func createDataLoadRequest(dataSetName, subDir string) *datastore.DataLoadRequest {
+func createDataLoadRequest(dataLoadRequestName, dataSetName string) *datastore.DataLoadRequest {
 	return &datastore.DataLoadRequest{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: fmt.Sprintf("%s/%s", apiGroup, version),
 			Kind:       "DataLoadRequest",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: dataSetName,
+			Name: dataLoadRequestName,
 		},
 		Spec: datastore.DataLoadRequestSpec{
 			IsGlobal: true,
 			Node:     *nodeName,
 			DataSet:  dataSetName,
-			SubDir:   subDir,
 		},
 		Status: datastore.DataLoadRequestStatus{
 			State: datastore.OperationStateStart,
@@ -137,4 +139,8 @@ func watchCustomResource(dsClient datastorev1alpha1.DatastoreV1alpha1Interface, 
 	return dsClient.DataLoadRequests(namespace).Watch(context.TODO(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("metadata.name=%s", resourceName),
 	})
+}
+
+func generateRandomSuffix() string {
+	return rand.String(5)
 }
