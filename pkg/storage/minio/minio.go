@@ -11,8 +11,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/mount-utils"
 	utilexec "k8s.io/utils/exec"
-
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -26,7 +26,6 @@ import (
 )
 
 const (
-	podUIidEnvVar   = "POD_UUID"
 	podNameEnvVar   = "POD_NAME"
 	NameSpaceEnvVar = "NAMESPACE"
 	MountPoint      = "/mnt/hwameistor/datastore/"
@@ -206,15 +205,12 @@ func LoadObjectsFromDragonflyV2(clientset *kubernetes.Clientset, spec *datastore
 			return err
 		}
 	}
-	start := time.Now()
+	log.Printf("start dataload from %s ...", dataSourceName)
 	err = dfgetDataV2(spec, mountPoint, localDir)
 	if err != nil {
 		log.WithError(err)
 		return err
 	}
-	end := time.Now()
-	duration := end.Sub(start)
-	fmt.Printf("dataset dataLoad execution time: %s\n", duration)
 	if err := mounter.Unmount(mountPoint); err != nil {
 		if !os.IsNotExist(err) {
 			log.WithError(err)
@@ -226,7 +222,6 @@ func LoadObjectsFromDragonflyV2(clientset *kubernetes.Clientset, spec *datastore
 	return nil
 }
 
-// 后期设计为job
 func dfgetData(clientset kubernetes.Interface, spec *datastorev1alpha1.MinIOSpec, volumeName, mountPoint, localDir string) error {
 	namespace := os.Getenv(NameSpaceEnvVar)
 	podName := os.Getenv(podNameEnvVar)
@@ -273,9 +268,10 @@ func dfgetData(clientset kubernetes.Interface, spec *datastorev1alpha1.MinIOSpec
 }
 
 func dfgetDataV2(spec *datastorev1alpha1.MinIOSpec, mountPoint, localDir string) error {
-
 	spec.Prefix = strings.TrimRight(strings.TrimLeft(spec.Prefix, "/"), "/")
-
+	if localDir != "" {
+		mountPoint = filepath.Join(mountPoint, localDir)
+	}
 	var dfget []string
 	dfget = append(dfget,
 		"--recursive",
@@ -286,7 +282,7 @@ func dfgetDataV2(spec *datastorev1alpha1.MinIOSpec, mountPoint, localDir string)
 		"--header", "awsSecretAccessKey: "+spec.SecretKey,
 		"--header", "awsS3ForcePathStyle: true",
 		"--url", fmt.Sprintf("s3://%s/%s/", spec.Bucket, spec.Prefix),
-		"--output", mountPoint+localDir,
+		"--output", mountPoint,
 	)
 
 	params := exechelper.ExecParams{
@@ -294,7 +290,9 @@ func dfgetDataV2(spec *datastorev1alpha1.MinIOSpec, mountPoint, localDir string)
 		CmdArgs: dfget,
 		Timeout: int(time.Hour),
 	}
-	return nsexecutor.New().RunCommand(params).Error
+	command := nsexecutor.New().RunCommand(params)
+	log.Printf("dfget Output:\n%s", command.OutBuf.String())
+	return command.Error
 }
 
 func getPoolClassAndFsType(volumeName string, clientset kubernetes.Interface) (poolClass string, fsType string, err error) {

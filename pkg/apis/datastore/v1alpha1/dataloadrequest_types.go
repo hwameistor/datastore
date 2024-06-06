@@ -22,6 +22,7 @@ type DataLoadRequestSpec struct {
 	// name of the dataSet source
 	DataSet string `json:"dataSet"`
 	SubDir  string `json:"subDir,omitempty"`
+	DstDir  string `json:"dstDir,omitempty"`
 }
 
 // DataLoadRequestStatus defines the observed state of DataLoadRequest

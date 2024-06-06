@@ -46,6 +46,8 @@ spec:
               dataSet:
                 description: name of the dataSet source
                 type: string
+              dstDir:
+                type: string
               isGlobal:
                 default: true
                 description: indicate if the request is for all or not
