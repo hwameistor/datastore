@@ -26,6 +26,7 @@ require (
 )
 
 require (
+	github.com/hwameistor/hwameistor v0.14.4
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/pytool/ssh v0.0.0-20190312091242-5aaea5918db7
@@ -35,6 +36,7 @@ require (
 )
 
 require (
+	github.com/container-storage-interface/spec v1.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
@@ -47,12 +49,12 @@ require (
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/onsi/gomega v1.19.0 // indirect
 	github.com/pkg/sftp v1.10.1 // indirect
-	github.com/prometheus/client_golang v1.13.1 // indirect
 	github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
+	google.golang.org/genproto v0.0.0-20220107163113-42d7afdf6368 // indirect
+	google.golang.org/grpc v1.40.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 )
