@@ -1,5 +1,5 @@
 FROM alpine:latest
 
-COPY ./_build/datamanager /
+COPY ./_build/dataload-init /
 
 ENTRYPOINT [ "/dataload-init" ]

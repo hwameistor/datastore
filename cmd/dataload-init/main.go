@@ -7,41 +7,35 @@ import (
 	datastorev1alpha1 "github.com/hwameistor/datastore/pkg/apis/client/clientset/versioned/typed/datastore/v1alpha1"
 	datastore "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
 	log "github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"os"
 	"time"
 )
 
 var (
-	nodeName = flag.String("nodename", "", "Node name")
-	dstDir   = flag.String("dstdir", "", "destination Directory")
+	dstDir = flag.String("dstdir", "", "destination Directory")
 )
 
 const (
 	NameSpaceEnvVar = "NAMESPACE"
-	pvcNameEnvVar   = "PVC_NAME"
+	NodeEnvVar      = "MY_NODENAME"
+	DataSetEnvVar   = "DATASET_NAME"
 	apiGroup        = "example.com"
 	version         = "v1alpha1"
 )
 
 func main() {
 	flag.Parse()
-	if *nodeName == "" {
-		log.WithFields(log.Fields{"nodename": *nodeName}).Error("Invalid node name")
-		os.Exit(1)
-	}
 
 	namespace := os.Getenv(NameSpaceEnvVar)
-	pvcName := os.Getenv(pvcNameEnvVar)
+	nodeName := os.Getenv(NodeEnvVar)
+	dataSetName := os.Getenv(DataSetEnvVar)
 
-	if namespace == "" || pvcName == "" {
+	if namespace == "" || nodeName == "" {
 		log.Fatal("Namespace or PVC Name environment variables are not set.")
 		os.Exit(1)
 	}
@@ -52,22 +46,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.WithError(err).Fatal("Failed to create Kubernetes clientset")
-		os.Exit(1)
-	}
-
-	pvcClient := clientset.CoreV1().PersistentVolumeClaims(namespace)
-	pvc, err := getPersistentVolumeClaim(pvcClient, pvcName)
-	if err != nil {
-		log.WithError(err).Error("Failed to get PVC")
-		os.Exit(1)
-	}
-
-	dataSetName := pvc.Spec.VolumeName
 	dataLoadRequestName := dataSetName + "-" + generateRandomSuffix()
-	dataLoadRequest := createDataLoadRequest(dataLoadRequestName, dataSetName)
+	dataLoadRequest := createDataLoadRequest(dataLoadRequestName, dataSetName, nodeName)
 	if *dstDir != "" {
 		dataLoadRequest.Spec.DstDir = *dstDir
 	}
@@ -103,11 +83,7 @@ func getConfig() (*rest.Config, error) {
 	return config, nil
 }
 
-func getPersistentVolumeClaim(pvcClient v1.PersistentVolumeClaimInterface, pvcName string) (*corev1.PersistentVolumeClaim, error) {
-	return pvcClient.Get(context.TODO(), pvcName, metav1.GetOptions{})
-}
-
-func createDataLoadRequest(dataLoadRequestName, dataSetName string) *datastore.DataLoadRequest {
+func createDataLoadRequest(dataLoadRequestName, dataSetName, nodeName string) *datastore.DataLoadRequest {
 	return &datastore.DataLoadRequest{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: fmt.Sprintf("%s/%s", apiGroup, version),
@@ -118,7 +94,7 @@ func createDataLoadRequest(dataLoadRequestName, dataSetName string) *datastore.D
 		},
 		Spec: datastore.DataLoadRequestSpec{
 			IsGlobal: true,
-			Node:     *nodeName,
+			Node:     nodeName,
 			DataSet:  dataSetName,
 		},
 		Status: datastore.DataLoadRequestStatus{
