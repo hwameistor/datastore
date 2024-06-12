@@ -1,7 +1,6 @@
-FROM alpine:latest
+FROM centos:7
 
-RUN wget https://github.com/juicedata/juicesync/releases/download/v1.1.1/juicesync-1.1.1-linux-arm64.tar.gz
-RUN tar zxf juicesync-1.1.1-linux-arm64.tar.gz && mv juicesync /usr/bin && chmod +x /usr/bin/juicesync
+RUN yum update -y nss nss-sysinit nss-tools
 
 COPY ./_build/dataload-manager /
 
