@@ -238,5 +238,5 @@ _gen-apis:
 	GOPROXY=https://goproxy.cn,direct /code-generator/generate-groups.sh all github.com/hwameistor/datastore/pkg/apis/client github.com/hwameistor/datastore/pkg/apis "datastore:v1alpha1" --go-header-file /go/src/github.com/hwameistor/datastore/build/boilerplate.go.txt
 
 .PHONY: release
-release: release_dataload_init release_dataload_manager
+release: release_dataload_init release_dataload_manager release_ds_accl
 
