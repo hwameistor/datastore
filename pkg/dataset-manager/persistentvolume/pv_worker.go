@@ -18,6 +18,15 @@ import (
 	"k8s.io/klog/v2"
 )
 
+var localVolumeTemplate = &hwameistor.LocalVolume{
+	ObjectMeta: metav1.ObjectMeta{
+		Annotations: map[string]string{
+			"hwameistor.io/acceleration-dataset": "true",
+		},
+	},
+	Spec: hwameistor.LocalVolumeSpec{},
+}
+
 type PVController interface {
 	Run(stopCh <-chan struct{})
 }
@@ -129,12 +138,19 @@ func (ctr *pvController) SyncNewOrUpdatedPersistentVolume(pv *v1.PersistentVolum
 				return
 			}
 			// LV isn't found, create it
-			if err = ctr.createRelatedLocalVolume(pv.Name); err == nil {
+			if pv.Spec.CSI == nil || pv.Spec.CSI.VolumeAttributes == nil || len(pv.Spec.CSI.VolumeAttributes["poolClass"]) == 0 {
+				klog.Errorf("Error getting poolClass for PersistentVolume from CSI.VolumeAttributes %s: %v", pv.Name, err)
+				ctr.pvQueue.AddRateLimited(pv.Name)
+				return
+			}
+			poolClass, _ := pv.Spec.CSI.VolumeAttributes["poolClass"]
+			if err = ctr.createRelatedLocalVolume(pv.Name, poolClass, pv.Spec.Capacity.Storage().Value()); err == nil {
 				klog.V(4).Infof("Created LocalVolume %s", pv.Name)
 			}
+		} else {
+			// LV exists, sync lv or pv status
+			err = ctr.syncPVStatus(pv)
 		}
-		// LV exists, sync lv or pv status
-		err = ctr.syncPVStatus(pv)
 	}
 
 	if err != nil {
@@ -159,20 +175,14 @@ func (ctr *pvController) deleteRelatedLocalVolume(lvName string) (err error) {
 	return
 }
 
-func (ctr *pvController) createRelatedLocalVolume(pvName string) (err error) {
-	lv := &hwameistor.LocalVolume{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: pvName,
-			Annotations: map[string]string{
-				"hwameistor.io/acceleration-dataset": "true",
-			},
-		},
-		Spec: hwameistor.LocalVolumeSpec{
-			RequiredCapacityBytes: 1 * (1024 * 1024 * 1024),
-			PoolName:              "LocalStorage_Pool" + "HDD", // TODO: get from config
-		},
-	}
-	_, err = ctr.hmClientset.HwameistorV1alpha1().LocalVolumes().Create(context.Background(), lv, metav1.CreateOptions{})
+func (ctr *pvController) createRelatedLocalVolume(pvName, poolClass string, capacityBytes int64) (err error) {
+	newLV := localVolumeTemplate.DeepCopy()
+
+	newLV.Name = pvName
+	newLV.Spec.RequiredCapacityBytes = capacityBytes
+	newLV.Spec.PoolName = "LocalStorage_Pool" + poolClass
+
+	_, err = ctr.hmClientset.HwameistorV1alpha1().LocalVolumes().Create(context.Background(), newLV, metav1.CreateOptions{})
 	return
 }
 
