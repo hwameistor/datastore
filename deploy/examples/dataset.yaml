@@ -1,0 +1,14 @@
+apiVersion: datastore.io/v1alpha1
+kind: DataSet
+metadata:
+  name: dataset-test
+spec:
+  refresh: true
+  type: minio
+  minio:
+    endpoint: http://10.6.234.50:9000
+    bucket: bucket-test
+    secretKey: minioadmin
+    accessKey: minioadmin
+    region: ap-southeast-2
+    prefix: test
