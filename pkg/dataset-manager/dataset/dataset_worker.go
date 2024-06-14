@@ -9,12 +9,14 @@ import (
 	datastore "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
 	"github.com/hwameistor/datastore/pkg/utils"
 	v1 "k8s.io/api/core/v1"
+	storageapis "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
+	"os"
 	"strings"
 
 	smino "github.com/hwameistor/datastore/pkg/storage/minio"
@@ -48,6 +50,8 @@ var (
 	minStorageCapacity = int64(4194304)
 	minStorageQuantity = resource.NewQuantity(minStorageCapacity, resource.BinarySI)
 )
+
+const poolClassEnv = "DEFAULT_POOL_CLASS"
 
 type DSController interface {
 	Run(stopCh <-chan struct{})
@@ -176,7 +180,12 @@ func (ctr *dsController) SyncNewOrUpdatedDatasource(ds *datastore.DataSet) {
 			return
 		}
 		// PV not found, create it
-		poolClass := "HDD"
+		poolClass, err := ctr.selectPoolClassAsStorage()
+		if err != nil {
+			klog.Errorf("Failed to select pool class as storage: %v", err)
+			return
+		}
+
 		if err = ctr.createRelatedPersistentVolume(ds.Name, poolClass, ds.Spec.CapacityBytes); err == nil {
 			klog.V(4).Infof("Created PersistentVolume %s", ds.Name)
 		}
@@ -247,4 +256,39 @@ func (ctr *dsController) updateDatasetCapacity(ds *datastore.DataSet) error {
 	patchCapacity := fmt.Sprintf("{\"spec\":{\"capacityBytes\":%d}}", capacity)
 	_, err = ctr.dsClientset.DatastoreV1alpha1().DataSets(ds.Namespace).Patch(context.Background(), ds.Name, types.MergePatchType, []byte(patchCapacity), metav1.PatchOptions{})
 	return err
+}
+
+func (ctr *dsController) selectPoolClassAsStorage() (string, error) {
+	// default pool class(HDD, SSD, NVMe, etc.)
+	selectedPoolClass, ok := os.LookupEnv(poolClassEnv)
+	if !ok {
+		storageClassList, err := ctr.kubeClient.StorageV1().StorageClasses().List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			klog.Errorf("Failed to list storageclasses: %v", err)
+			return "", err
+		}
+
+		hwStorageClasses := sortHwameiStorageClasses(storageClassList.Items)
+		if len(hwStorageClasses) == 0 {
+			return "", fmt.Errorf("both default storage poolClass and storageclass not found")
+		}
+		selectedPoolClass = hwStorageClasses[0].Parameters["poolClass"]
+
+		klog.V(4).Infof("Found %d hwameistor storageclasses, choose %s as backend storage class", len(hwStorageClasses), selectedPoolClass)
+		return selectedPoolClass, nil
+	}
+
+	return selectedPoolClass, nil
+}
+
+func sortHwameiStorageClasses(storageClasses []storageapis.StorageClass) []storageapis.StorageClass {
+	var hwameiStorStorageClasses []storageapis.StorageClass
+	for _, sc := range storageClasses {
+		if sc.Provisioner == "lvm.hwameistor.io" && sc.Parameters != nil && len(sc.Parameters["poolClass"]) > 0 {
+			hwameiStorStorageClasses = append(hwameiStorStorageClasses, sc)
+		}
+	}
+
+	// todo(ming) - order storageClasses: defaultStorageClass > NVMe > SSD > HDD
+	return hwameiStorStorageClasses
 }
