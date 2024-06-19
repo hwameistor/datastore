@@ -24,6 +24,8 @@ type DataSetSpec struct {
 
 	FTP *FTPSpec `json:"ftp,omitempty"`
 
+	CapacityBytes int64 `json:"capacityBytes,omitempty"`
+
 	// indicate if refresh data or not
 	// +kubebuilder:default:=true
 	Refresh bool `json:"refresh"`

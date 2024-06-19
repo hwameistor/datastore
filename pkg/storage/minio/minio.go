@@ -229,7 +229,7 @@ func dfgetData(clientset kubernetes.Interface, spec *datastorev1alpha1.MinIOSpec
 	podClient := clientset.CoreV1().Pods(namespace)
 	pod, err := podClient.Get(context.TODO(), podName, metav1.GetOptions{})
 	if err != nil {
-		log.WithError(err).Error("Failed to get pod:%s", podName)
+		log.WithError(err).Errorf("Failed to get pod:%s", podName)
 		return err
 	}
 	genDir, err := findGenDirPath(pod, volumeName, clientset)
