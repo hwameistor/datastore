@@ -32,6 +32,7 @@ require (
 	github.com/pytool/ssh v0.0.0-20190312091242-5aaea5918db7
 	github.com/radovskyb/watcher v1.0.7
 	github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00
+	k8s.io/kubernetes v1.24.0
 	k8s.io/mount-utils v0.24.0
 )
 
