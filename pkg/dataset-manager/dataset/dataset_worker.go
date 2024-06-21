@@ -8,13 +8,17 @@ import (
 	dslisters "github.com/hwameistor/datastore/pkg/apis/client/listers/datastore/v1alpha1"
 	datastore "github.com/hwameistor/datastore/pkg/apis/datastore/v1alpha1"
 	"github.com/hwameistor/datastore/pkg/utils"
+	"github.com/hwameistor/hwameistor/pkg/apis/hwameistor/v1alpha1"
 	v1 "k8s.io/api/core/v1"
+	storageapis "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
+	util2 "k8s.io/kubernetes/pkg/apis/storage/v1/util"
+	"os"
 	"strings"
 
 	smino "github.com/hwameistor/datastore/pkg/storage/minio"
@@ -45,9 +49,15 @@ var (
 			},
 		},
 	}
+	volumeAttrTemplate = map[string]string{
+		"convertible": "false",
+		"volumeKind":  "LVM",
+	}
 	minStorageCapacity = int64(4194304)
 	minStorageQuantity = resource.NewQuantity(minStorageCapacity, resource.BinarySI)
 )
+
+const poolClassEnv = "DEFAULT_POOL_CLASS"
 
 type DSController interface {
 	Run(stopCh <-chan struct{})
@@ -176,7 +186,12 @@ func (ctr *dsController) SyncNewOrUpdatedDatasource(ds *datastore.DataSet) {
 			return
 		}
 		// PV not found, create it
-		poolClass := "HDD"
+		poolClass, err := ctr.choosePoolClassAsStorage()
+		if err != nil {
+			klog.Errorf("Failed to choose one pool class as storage: %v", err)
+			return
+		}
+
 		if err = ctr.createRelatedPersistentVolume(ds.Name, poolClass, ds.Spec.CapacityBytes); err == nil {
 			klog.V(4).Infof("Created PersistentVolume %s", ds.Name)
 		}
@@ -191,13 +206,11 @@ func (ctr *dsController) deleteRelatedPersistentVolume(pvName string) error {
 func (ctr *dsController) createRelatedPersistentVolume(pvName, poolClass string, capacityBytes int64) (err error) {
 	newPV := persistentVolumeTemplate.DeepCopy()
 
-	volumeAttr := make(map[string]string)
-	volumeAttr["convertible"] = "false"
-	volumeAttr["csi.storage.k8s.io/pv/name"] = pvName
-	volumeAttr["volumeKind"] = "LVM"
-	volumeAttr["poolClass"] = poolClass
-
 	volumeMode := v1.PersistentVolumeFilesystem
+	volumeAttr := volumeAttrTemplate
+	volumeAttr["csi.storage.k8s.io/pv/name"] = pvName
+	volumeAttr[v1alpha1.VolumeParameterPoolClassKey] = poolClass
+
 	newPV.Name = pvName
 	newPV.Spec.VolumeMode = &volumeMode
 	newPV.Spec.CSI.VolumeAttributes = volumeAttr
@@ -247,4 +260,59 @@ func (ctr *dsController) updateDatasetCapacity(ds *datastore.DataSet) error {
 	patchCapacity := fmt.Sprintf("{\"spec\":{\"capacityBytes\":%d}}", capacity)
 	_, err = ctr.dsClientset.DatastoreV1alpha1().DataSets(ds.Namespace).Patch(context.Background(), ds.Name, types.MergePatchType, []byte(patchCapacity), metav1.PatchOptions{})
 	return err
+}
+
+func (ctr *dsController) choosePoolClassAsStorage() (string, error) {
+	// default pool class(HDD, SSD, NVMe, etc.)
+	selectedPoolClass, ok := os.LookupEnv(poolClassEnv)
+	if !ok {
+		storageClassList, err := ctr.kubeClient.StorageV1().StorageClasses().List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			klog.Errorf("Failed to list storageclasses: %v", err)
+			return "", err
+		}
+
+		hwStorageClasses := sortHwameiStorageClasses(storageClassList.Items)
+		if len(hwStorageClasses) == 0 {
+			return "", fmt.Errorf("both default storage poolClass and storageclass not found")
+		}
+		selectedPoolClass = hwStorageClasses[0].Parameters[v1alpha1.VolumeParameterPoolClassKey]
+
+		klog.V(4).Infof("Found %d hwameistor storageclasses, choose %s as backend storage class", len(hwStorageClasses), selectedPoolClass)
+		return selectedPoolClass, nil
+	}
+
+	return selectedPoolClass, nil
+}
+
+func sortHwameiStorageClasses(storageClasses []storageapis.StorageClass) []storageapis.StorageClass {
+	var sortedHwStorageClasses, hwDefaultSC, hwNVMeSC, hwSSDSC, hwHDDSC []storageapis.StorageClass
+	for _, sc := range storageClasses {
+		// only validated hwameistor storageclass will be sorted
+		if sc.Provisioner == "lvm.hwameistor.io" && sc.Parameters != nil && len(sc.Parameters[v1alpha1.VolumeParameterPoolClassKey]) > 0 {
+			if util2.IsDefaultAnnotation(sc.ObjectMeta) {
+				hwDefaultSC = append(hwDefaultSC, sc)
+				continue
+			}
+
+			switch sc.Parameters[v1alpha1.VolumeParameterPoolClassKey] {
+			case v1alpha1.DiskClassNameHDD:
+				hwHDDSC = append(hwHDDSC, sc)
+			case v1alpha1.DiskClassNameSSD:
+				hwSSDSC = append(hwSSDSC, sc)
+			case v1alpha1.DiskClassNameNVMe:
+				hwNVMeSC = append(hwNVMeSC, sc)
+			default:
+				klog.V(4).Infof("Unknown poolClass %s, skip it", sc.Parameters[v1alpha1.VolumeParameterPoolClassKey])
+			}
+		}
+	}
+
+	sortedHwStorageClasses = append(sortedHwStorageClasses, hwDefaultSC...)
+	sortedHwStorageClasses = append(sortedHwStorageClasses, hwNVMeSC...)
+	sortedHwStorageClasses = append(sortedHwStorageClasses, hwSSDSC...)
+	sortedHwStorageClasses = append(sortedHwStorageClasses, hwHDDSC...)
+
+	klog.V(4).Infof("Sorted hwameistor storageclasses: %d, default storageclass: %d", len(sortedHwStorageClasses), len(hwDefaultSC))
+	return sortedHwStorageClasses
 }
