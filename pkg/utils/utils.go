@@ -5,20 +5,20 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"k8s.io/client-go/tools/clientcmd"
 	"math"
 	"os"
 	"strconv"
 	"unicode"
 
+	datastoreclientsetv1alpha1 "github.com/hwameistor/datastore/pkg/apis/client/clientset/versioned/typed/datastore/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-
-	datastoreclientsetv1alpha1 "github.com/hwameistor/datastore/pkg/apis/client/clientset/versioned/typed/datastore/v1alpha1"
+	restclient "k8s.io/client-go/rest"
 )
 
 func BuildInClusterDataStoreClientset() *datastoreclientsetv1alpha1.DatastoreV1alpha1Client {
-	config, err := config.GetConfig()
+	config, err := createKubeConfig("", "")
 	if err != nil {
 		log.WithError(err).Fatal("Failed to build kubernetes config")
 	}
@@ -27,7 +27,7 @@ func BuildInClusterDataStoreClientset() *datastoreclientsetv1alpha1.DatastoreV1a
 
 // BuildInClusterClientset builds a kubernetes in-cluster clientset
 func BuildInClusterClientset() *kubernetes.Clientset {
-	config, err := config.GetConfig()
+	config, err := createKubeConfig("", "")
 	if err != nil {
 		log.WithError(err).Fatal("Failed to build kubernetes config")
 	}
@@ -162,4 +162,20 @@ func CapacityRoundUp(originSize int64) int64 {
 	}
 
 	return ((originSize + base) / base) * base
+}
+
+const (
+	defaultQPS   = 50.0
+	defaultBurst = 100
+)
+
+func createKubeConfig(masterUrl, kubeconfig string) (*restclient.Config, error) {
+	kubeConfig, err := clientcmd.BuildConfigFromFlags(masterUrl, kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeConfig.QPS = defaultQPS
+	kubeConfig.Burst = defaultBurst
+	return kubeConfig, nil
 }
