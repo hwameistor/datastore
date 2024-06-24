@@ -1,7 +1,7 @@
 module github.com/hwameistor/datastore
 
 //go 1.18
-go 1.20
+go 1.21.11
 
 require (
 	github.com/operator-framework/operator-sdk v0.18.2
