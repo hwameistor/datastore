@@ -272,6 +272,8 @@ func dfgetDataV2(spec *datastorev1alpha1.MinIOSpec, mountPoint, localDir string)
 	if localDir != "" {
 		mountPoint = filepath.Join(mountPoint, localDir)
 	}
+
+	spec.Endpoint = "http://" + spec.Endpoint
 	var dfget []string
 	dfget = append(dfget,
 		"--recursive",

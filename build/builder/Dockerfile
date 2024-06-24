@@ -1,3 +1,4 @@
+#FROM golang:1.19-alpine
 FROM golang:1.21.5-alpine
 
 # set mirror repository for the package management
