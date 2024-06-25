@@ -23,14 +23,17 @@ Datastore contains several modules:
 
 The Dataset Manager (DSM) is designed to manage datasets and allocate local acceleration cache volumes for datasets. 
 Other modules (such as DLM) can use the cache volumes provided by DSM to load datasets.
-[Learn more](https://github.com/hwameistor/hwameistor/docs/docs/modules/dsm.md)
+[Learn more](./docs/dsm.md)
 
 ### dataload-manager
 
 Dataload-manager (DLM) provides a service for loading data sets for local cache volumes.
 It aims to quickly pull data sets for application programs for training in AI training environments.
-[Learn more](https://github.com/hwameistor/hwameistor/docs/docs/modules/dlm.md)
+[Learn more](./docs/dlm.md)
 
+
+## Quick Use
+[Learn more](./docs/use.md)
 
 
 ## Documentation
