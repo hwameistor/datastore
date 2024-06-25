@@ -1,11 +1,11 @@
-# HwameiStor
+# DataStore
 
 English | [简体中文](./README_zh.md)
 
 Datastore is a project developed to accelerate local storage hwameistor to load data. 
 It can help hwameistor to be well applied in AI scenarios and other scenarios that require fast data loading for training.
 
-![System architecture](https://github.com/hwameistor/hwameistor/docs/docs/img/architecture.png)
+![System architecture](https://github.com/hwameistor/hwameistor/docs/docs/img/datastore.png)
 
 ## Release Status
 
@@ -13,7 +13,7 @@ See [current releases](https://github.com/hwameistor/datastore/releases).
 
 ## Modules and Code
 
-HwameiStor contains several modules:
+Datastore contains several modules:
 
 * [dataset-manager](#dataset-manager)
 * [dataload-manager](#dataload-manager)
@@ -21,16 +21,15 @@ HwameiStor contains several modules:
 
 ### dataset-manager
 
-local-disk-manager (LDM) is designed to hold the management of disks on nodes.
-Other modules such as local-storage can take advantage of the disk management feature provided by LDM.
-[Learn more](https://github.com/hwameistor/hwameistor/docs/docs/modules/ldm.md)
+The Dataset Manager (DSM) is designed to manage datasets and allocate local acceleration cache volumes for datasets. 
+Other modules (such as DLM) can use the cache volumes provided by DSM to load datasets.
+[Learn more](https://github.com/hwameistor/hwameistor/docs/docs/modules/dsm.md)
 
 ### dataload-manager
 
-local-storage (LS) provides a cloud-native local storage system.
-It aims to provision high-performance persistent LVM volume with local access to applications.
-[Learn more](https://github.com/hwameistor/hwameistor/docs/docs/modules/ls.md)
-
+Dataload-manager (DLM) provides a service for loading data sets for local cache volumes.
+It aims to quickly pull data sets for application programs for training in AI training environments.
+[Learn more](https://github.com/hwameistor/hwameistor/docs/docs/modules/dlm.md)
 
 
 ## Documentation
