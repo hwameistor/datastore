@@ -5,7 +5,7 @@ English | [简体中文](./README_zh.md)
 Datastore is a project developed to accelerate local storage hwameistor to load data. 
 It can help hwameistor to be well applied in AI scenarios and other scenarios that require fast data loading for training.
 
-![System architecture](https://github.com/hwameistor/hwameistor/docs/docs/img/datastore.png)
+![System architecture](./docs/img/datastore.png)
 
 ## Release Status
 
@@ -30,6 +30,7 @@ Other modules (such as DLM) can use the cache volumes provided by DSM to load da
 Dataload-manager (DLM) provides a service for loading data sets for local cache volumes.
 It aims to quickly pull data sets for application programs for training in AI training environments.
 [Learn more](https://github.com/hwameistor/hwameistor/docs/docs/modules/dlm.md)
+
 
 
 ## Documentation
@@ -58,7 +59,7 @@ and then join the [#hwameistor](https://cloud-native.slack.com/messages/hwameist
 
 HwameiStor tech-talk group:
 
-![QR code for Wechat](https://github.com/hwameistor/hwameistor/docs/docs/img/wechat.png)
+![QR code for Wechat](./docs/img/wechat.png)
 
 ## Discussion
 
