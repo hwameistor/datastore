@@ -272,6 +272,8 @@ func dfgetDataV2(spec *datastorev1alpha1.MinIOSpec, mountPoint, localDir string)
 	if localDir != "" {
 		mountPoint = filepath.Join(mountPoint, localDir)
 	}
+
+	spec.Endpoint = "http://" + spec.Endpoint
 	var dfget []string
 	dfget = append(dfget,
 		"--recursive",
@@ -281,7 +283,8 @@ func dfgetDataV2(spec *datastorev1alpha1.MinIOSpec, mountPoint, localDir string)
 		"--header", "awsAccessKeyID: "+spec.AccessKey,
 		"--header", "awsSecretAccessKey: "+spec.SecretKey,
 		"--header", "awsS3ForcePathStyle: true",
-		"--url", fmt.Sprintf("s3://%s/%s/", spec.Bucket, spec.Prefix),
+		//"--url", fmt.Sprintf("s3://%s/%s/", spec.Bucket, spec.Prefix),
+		"--url", fmt.Sprintf("s3://%s", spec.Bucket),
 		"--output", mountPoint,
 	)
 
