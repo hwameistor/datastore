@@ -5,7 +5,7 @@
 Datastore 是为了加速本地存储 hwameistor 加载数据而开发的项目。
 它可以帮助 hwameistor 很好地应用于 AI 场景以及其他需要快速加载数据进行训练的场景。
 
-![System architecture](https://github.com/hwameistor/hwameistor/docs/docs/img/datastore.png)
+![System architecture](./docs/img/datastore.png)
 
 ## 发版状态
 
@@ -23,13 +23,17 @@ Datastore 包含若干模块：
 
 数据集管理器（DSM）用于管理数据集，为数据集分配本地加速缓存卷。
 其他模块（如DLM）可以使用DSM提供的缓存卷加载数据集。
-[了解更多](https://github.com/hwameistor/hwameistor/docs/docs/modules/dsm.md)
+[了解更多](./docs/dsm.md)
 
 ### 数据加载管理器
 
 Dataload-manager (DLM) 提供为本地缓存卷加载数据集的服务。
 旨在快速拉取数据集供应用程序在 AI 训练环境中进行训练。
-[了解更多](https://github.com/hwameistor/hwameistor/docs/docs/modules/dlm.md)
+[了解更多](./docs/dlm.md)
+
+
+## Quick Use
+[了解更多](./docs/use.md)
 
 
 ## 文档
@@ -55,7 +59,7 @@ please check the [adopters list](https://github.com/hwameistor/hwameistor/adopte
 
 HwameiStor 技术沟通群：
 
-![扫描二维码入群](./docs/docs/img/wechat.png)
+![扫描二维码入群](./docs/img/wechat.png)
 
 ## 讨论
 
