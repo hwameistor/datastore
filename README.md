@@ -1,12 +1,11 @@
-# HwameiStor
+# DataStore
 
 English | [简体中文](./README_zh.md)
 
 Datastore is a project developed to accelerate local storage hwameistor to load data. 
 It can help hwameistor to be well applied in AI scenarios and other scenarios that require fast data loading for training.
 
-![System architecture](docs/docs/img/architecture.png)
-
+![System architecture](https://github.com/hwameistor/hwameistor/docs/docs/img/datastore.png)
 
 ## Release Status
 
@@ -14,7 +13,7 @@ See [current releases](https://github.com/hwameistor/datastore/releases).
 
 ## Modules and Code
 
-HwameiStor contains several modules:
+Datastore contains several modules:
 
 * [dataset-manager](#dataset-manager)
 * [dataload-manager](#dataload-manager)
@@ -22,15 +21,15 @@ HwameiStor contains several modules:
 
 ### dataset-manager
 
-local-disk-manager (LDM) is designed to hold the management of disks on nodes.
-Other modules such as local-storage can take advantage of the disk management feature provided by LDM.
-[Learn more](docs/docs/modules/ldm.md)
+The Dataset Manager (DSM) is designed to manage datasets and allocate local acceleration cache volumes for datasets. 
+Other modules (such as DLM) can use the cache volumes provided by DSM to load datasets.
+[Learn more](https://github.com/hwameistor/hwameistor/docs/docs/modules/dsm.md)
 
 ### dataload-manager
 
-local-storage (LS) provides a cloud-native local storage system.
-It aims to provision high-performance persistent LVM volume with local access to applications.
-[Learn more](docs/docs/modules/ls.md)
+Dataload-manager (DLM) provides a service for loading data sets for local cache volumes.
+It aims to quickly pull data sets for application programs for training in AI training environments.
+[Learn more](https://github.com/hwameistor/hwameistor/docs/docs/modules/dlm.md)
 
 
 
@@ -39,13 +38,13 @@ It aims to provision high-performance persistent LVM volume with local access to
 For full documentation, please see our website [hwameistor.io](https://hwameistor.io/docs/intro).
 
 For detailed adopters that have HwameiStor deployed in a production environment or a user acceptance testing environment,
-please check the [adopters list](./adopters.md).
+please check the [adopters list](https://github.com/hwameistor/hwameistor/adopters.md).
 
 
 ## Community
 
 We welcome contributions of any kind.
-If you have any questions about contributing, please consult the [contributing documentation](./docs/docs/contribute/CONTRIBUTING.md).
+If you have any questions about contributing, please consult the [contributing documentation](https://github.com/hwameistor/hwameistor/docs/docs/contribute/CONTRIBUTING.md).
 
 ### Blog
 
@@ -60,7 +59,7 @@ and then join the [#hwameistor](https://cloud-native.slack.com/messages/hwameist
 
 HwameiStor tech-talk group:
 
-![QR code for Wechat](./docs/docs/img/wechat.png)
+![QR code for Wechat](https://github.com/hwameistor/hwameistor/docs/docs/img/wechat.png)
 
 ## Discussion
 
