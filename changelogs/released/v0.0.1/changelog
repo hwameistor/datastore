@@ -1,0 +1,12 @@
+v0.0.1 / 2024-06-25
+========================
+
+Create dataload-manager and dataset-manager modules
+
+## dataset-manager
+* choose poolClass from cluster config #24 (@SSmallMonster)
+* Migrate dataset controller #19 (@SSmallMonster)
+## dataload-manager
+* ADD Dataload-Manager Model #16 (@peng9808)
+## README
+*  update README #28 (@peng9808)
